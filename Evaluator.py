@@ -39,7 +39,7 @@ class Evaluator:
                     btstrp_results[ml_model.name][score_name].append(result_per_btsrtp_per_model[score_name])
         return btstrp_results
 
-    def analysis_2_per_dg_model(self, dg_model_real: DGModel, n_learning: int = 100):
+    def analysis_coef_per_dg_model(self, dg_model_real: DGModel, n_learning: int = 100):
         corr_dict = {}
         real_data, corr_dict[dg_model_real.name] = self._get_corr(dg_model_real)
 
@@ -49,13 +49,13 @@ class Evaluator:
 
         return corr_dict
 
-    def analysis_3_per_dg_model(self, dg_model_real: DGModel, n_learning: int = 100, n_train: int = 100,
-                                n_test: int = 100):
+    def analysis_3_per_dg_model(self, dg_model_real: DGModel, n_learning: int, n_train: int,n_test: int):
         metrics = {}
         dg_metrics, learning_data, test_data = self._evaluate_dg_model(dg_model_real, n_learning=n_learning,
                                                                        n_train=n_train, n_test=n_test)
         metrics.update(dg_metrics)
         for dg_model in self.dg_models:
+            print("working on ",dg_model.name)
             dg_model.fit(learning_data)
             # todo fix issue with PC
             # assert len(dg_model_real.model.nodes) == len(test_data.all.columns)
@@ -65,9 +65,10 @@ class Evaluator:
             dg_metrics, _, _ = self._evaluate_dg_model(dg_model=dg_model, n_learning=-1, n_train=n_train, n_test=n_test,
                                                        test_data=test_data)
             metrics.update(dg_metrics)
+        print(metrics)
         return metrics
 
-    def analysis_4_per_dg_model(self, dg_model_real: DGModel, n_samples: int, tr_frac: float, n_reps: int):
+    def analysis_violin_per_dg_model(self, dg_model_real: DGModel, n_samples: int, tr_frac: float, n_reps: int):
         scores_per_dg_model = {}
         dg_model_real_scores, train_data, test_data = self._get_performance_by_repetition(dg_model_real, n_samples,
                                                                                           tr_frac, n_reps)
@@ -79,6 +80,21 @@ class Evaluator:
             dg_model_scores, *_ = self._get_performance_by_repetition(dg_model, n_samples, tr_frac, n_reps,
                                                                       test_data=test_data)
             scores_per_dg_model[dg_model.name] = dg_model_scores
+        return scores_per_dg_model
+
+    def analysis_4_per_dg_model(self, dg_model_real: DGModel,n_samples: int, tr_frac: float, n_reps: int):
+        scores_per_dg_model = {}
+        dg_model_real_scores, train_data, test_data = self._get_performance_by_repetition(dg_model_real, n_samples,
+                                                                                          tr_frac, n_reps)
+        scores_per_dg_model[dg_model_real.name] = dg_model_real_scores
+        for dg_model in self.dg_models:
+            dg_model.fit(train_data)
+            if dg_model.num_vars != len(test_data.all.columns):
+                continue
+            dg_model_scores, *_ = self._get_performance_by_repetition(dg_model, n_samples, tr_frac, n_reps,
+                                                                      test_data=test_data)
+            scores_per_dg_model[dg_model.name] = dg_model_scores
+        #print(scores_per_dg_model)
         return scores_per_dg_model
 
     def _evaluate_ml_model(self, ml_model: MachineLearner, test_data: Data):
