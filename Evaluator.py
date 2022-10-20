@@ -82,7 +82,7 @@ class Evaluator:
             scores_per_dg_model[dg_model.name] = dg_model_scores
         return scores_per_dg_model
 
-    def analysis_4_per_dg_model(self, dg_model_real: DGModel,n_samples: int, tr_frac: float, n_reps: int):
+    def analysis_3b_per_dg_model(self, dg_model_real: DGModel,n_samples: int, tr_frac: float, n_reps: int):
         scores_per_dg_model = {}
         dg_model_real_scores, train_data, test_data = self._get_performance_by_repetition(dg_model_real, n_samples,
                                                                                           tr_frac, n_reps)

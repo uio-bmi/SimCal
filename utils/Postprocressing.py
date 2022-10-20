@@ -101,8 +101,9 @@ class Postprocessing():
         plt.savefig('repeated_interworld_benchmarking_of_mlpipelines.png')
         plt.show()
 
-    def plot_analysis4(self, analysis4_results: dict):
-        methods = ['DecisionTreeClassifier','RandomForestClassifier','GaussianNB','BernoulliNB','MultinomialNB','ComplementNB','CategoricalNB','KNeighborsClassifier','GradientBoostingClassifier','SVCRbf','SVCLinear','SVCSigmoid','LogisticLASSO','MLPClassifier']
+    def plot_analysis3b(self, analysis4_results: dict):
+        methods = ['DecisionTreeClassifier','RandomForestClassifier','KNeighborsClassifier','GradientBoostingClassifier','SVCRbf','SVCLinear','SVCSigmoid','LogisticLASSO','MLPClassifier']
+        # Additional NBMethods 'GaussianNB','BernoulliNB','MultinomialNB','ComplementNB','CategoricalNB',
         method_max_real = {}
         fig, ax = plt.subplots(figsize=(10, 10))
         real_scores_list = []
@@ -116,10 +117,10 @@ class Postprocessing():
             i += 1
             valuesList = [measure[key] for key in measure]
             real_scores_list.append(np.mean(valuesList))
-        print("real-world measures:")
-        print(real_scores_list)
+        #print("real-world measures:")
+        #print(real_scores_list)
         score_df.drop('pipeline1', inplace=True, axis=1)
-        print("learned-world measures:")
+        #print("learned-world measures:")
         for (columnName, columnData) in score_df.iteritems():
             #print('Column Name : ', columnName)
             #print('Column Contents : ', columnData.values)
@@ -127,9 +128,9 @@ class Postprocessing():
                 learnedValuesList = [learned_measure[v] for v in learned_measure]
                 learned_scores_list.append(np.mean(learnedValuesList))
                 learned_scores_dev.append(np.std(learnedValuesList)/np.sqrt(len(learnedValuesList)))
-            print("----")
-            print(real_scores_list)
-            print(learned_scores_list)
+            #print("----")
+            #print(real_scores_list)
+            #print(learned_scores_list)
             #method_max_learned = {
             #    methods[learned_scores_list.index(max(learned_scores_list))]: max(learned_scores_list)}
 
@@ -147,8 +148,6 @@ class Postprocessing():
         #    ranges_of_performance.append(range_ml)
         #    print("ml :", ml)
         #    print("score range :", range_ml)
-        #print(ranges_of_performance)
-        #print(real_scores_list)
 
         method_max_real = {methods[real_scores_list.index(max(real_scores_list))]: max(real_scores_list)}
 
