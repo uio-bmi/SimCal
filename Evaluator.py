@@ -15,7 +15,7 @@ class Evaluator:
         self.dg_models = dg_models
         self.outcome_name = outcome_name
 
-    def analysis_0_per_dg_model(self, dg_model_real: DGModel, n_repetitions, n_samples: int, tr_frac: float, n_btstrps: int):
+    def analysis_0_per_dg_model(self, dg_model_real: DGModel, n_repetitions, n_samples: int, tr_frac: float):
         """
 
         :param dg_model_real: a (pretended) real-world DagSim model

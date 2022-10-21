@@ -9,7 +9,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn import linear_model
 from pgmpy.estimators import *
 import warnings
-
+# pip install git+https://github.com/xunzheng/notears.git#egg=notears if notears not installed
 from sklearn.tree import DecisionTreeClassifier
 
 from dg_models.PgmpyLearner import PgmpyModel
@@ -160,14 +160,17 @@ evaluator = Evaluator(ml_models=list_sklearn, dg_models=[*list_pgmpy, no_tears_l
 
 pp = Postprocessing()
 
-analysis1_results = evaluator.analysis_1_per_dg_model(dg_model_real=ds_model, n_samples=1000, tr_frac=0.5, n_btstrps=20)
+analysis0_results = evaluator.analysis_0_per_dg_model(dg_model_real=ds_model, n_repetitions=10000, n_samples=1000, tr_frac=0.5)
+pp.plot_analysis0(analysis0_results)
+
+analysis1_results = evaluator.analysis_1_per_dg_model(dg_model_real=ds_model, n_samples=10000, tr_frac=0.5, n_btstrps=20)
 pp.plot_analysis1(analysis1_results)
 
-analysis3 = evaluator.analysis_3_per_dg_model(ds_model, n_learning=1000, n_train=1000,n_test=500)
-pp.plot_analysis3(analysis3_results=analysis3)
+#analysis3 = evaluator.analysis_3_per_dg_model(ds_model, n_learning=1000, n_train=1000,n_test=500)
+#pp.plot_analysis3(analysis3_results=analysis3)
 
-analysis3b = evaluator.analysis_3b_per_dg_model(ds_model, n_samples=1000, tr_frac=0.5, n_reps=20)
-pp.plot_analysis3b(analysis3b)
+#analysis3b = evaluator.analysis_3b_per_dg_model(ds_model, n_samples=1000, tr_frac=0.5, n_reps=20)
+#pp.plot_analysis3b(analysis3b)
 
 # Extra analysis, DAG-benchmarking and violin plot
 #analysis_coef = evaluator.analysis_coef_per_dg_model(ds_model)

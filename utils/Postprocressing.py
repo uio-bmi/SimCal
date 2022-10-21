@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+import scipy
 from transpose_dict import TD
 from scipy.stats import sem
 import numpy as np
@@ -9,6 +10,33 @@ import seaborn as sns
 class Postprocessing():
     def __init__(self):
         pass
+
+    def plot_analysis0(self, analysis1_results: pd.DataFrame):
+        score_names = analysis1_results.index
+        for score_name in score_names:
+            y = [np.mean(analysis1_results[alg][score_name]) for alg in analysis1_results.columns]
+            y_err_d = [np.min(scipy.stats.sem(analysis1_results[alg][score_name])) for alg
+                       in analysis1_results.columns]
+            y_err_u = [np.max(scipy.stats.sem(analysis1_results[alg][score_name])) for alg
+                       in analysis1_results.columns]
+            y_err = [y_err_d, y_err_u]
+
+            alg_names = analysis1_results.columns
+            x_pos = np.arange(len(alg_names))
+
+            fig, ax = plt.subplots()
+            ax.bar(x_pos, y, yerr=y_err, align='center', alpha=0.5, ecolor='black', capsize=10)
+            ax.set_ylim(0, 1)
+            ax.set_ylabel(score_name)
+            ax.set_xticks(x_pos)
+            ax.set_xticklabels(alg_names, rotation=90)
+            # ax.set_title(f'{score_name} of different ML models')
+            ax.yaxis.grid(True)
+
+            # Save the figure and show
+            plt.tight_layout()
+            plt.savefig('analysis_0_bar_plot_with_error_bars.png')
+            plt.show()
 
     def plot_analysis1(self, analysis1_results: pd.DataFrame):
         score_names = analysis1_results.index
@@ -34,7 +62,7 @@ class Postprocessing():
 
             # Save the figure and show
             plt.tight_layout()
-            plt.savefig('bar_plot_with_error_bars.png')
+            plt.savefig('analysis_1_bar_plot_with_error_bars.png')
             plt.show()
 
     def plot_analysis2(self, analysis2_results: dict):
