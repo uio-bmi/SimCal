@@ -15,6 +15,29 @@ class Evaluator:
         self.dg_models = dg_models
         self.outcome_name = outcome_name
 
+    def analysis_0_per_dg_model(self, dg_model_real: DGModel, n_repetitions, n_samples: int, tr_frac: float, n_btstrps: int):
+        """
+
+        :param dg_model_real: a (pretended) real-world DagSim model
+        :n_repetitions: number of times to repeat training-testing
+        :param n_samples: number of samples to generate for training + testing
+        :param tr_frac: fraction of data for training
+        :param n_btstrps: numer of times to  perform bootstrap
+        :return: btstrp_results: dict of shape {model_name: {score_name: list_of_score_values], ...}, ...}
+        """
+        results = pd.DataFrame(data=[[[] for _ in range(len(self.ml_models))] for __ in range(len(self.scores))],
+                                      index=[sc.__name__ for sc in self.scores],
+                                      columns=[md.name for md in self.ml_models])
+        for _ in range(n_repetitions):
+            orig_train_data, test_data = self._get_train_and_test_from_dg(dg_model_real, n_samples, tr_frac)
+            assert len(orig_train_data) + len(test_data) == n_samples
+
+            for ml_model in self.ml_models:
+                result_per_repetition_per_model = self._develop_ml_model(ml_model, orig_train_data, test_data)
+                for score_name in results.index.values.tolist():
+                    results[ml_model.name][score_name].append(result_per_repetition_per_model[score_name])
+        return results
+
     def analysis_1_per_dg_model(self, dg_model_real: DGModel, n_samples: int, tr_frac: float, n_btstrps: int):
         """
 
