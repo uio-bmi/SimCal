@@ -15,11 +15,8 @@ class Postprocessing():
         score_names = analysis0_results.index
         for score_name in score_names:
             y = [np.mean(analysis0_results[alg][score_name]) for alg in analysis0_results.columns]
-            y_err_d = [np.min(scipy.stats.sem(analysis0_results[alg][score_name])) for alg
+            y_err = [scipy.stats.sem(analysis0_results[alg][score_name]) for alg
                        in analysis0_results.columns]
-            y_err_u = [np.max(scipy.stats.sem(analysis0_results[alg][score_name])) for alg
-                       in analysis0_results.columns]
-            y_err = [y_err_d, y_err_u]
 
             alg_names = analysis0_results.columns
             x_pos = np.arange(len(alg_names))
@@ -42,12 +39,9 @@ class Postprocessing():
         score_names = analysis1_results.index
         for score_name in score_names:
             y = [np.mean(analysis1_results[alg][score_name]) for alg in analysis1_results.columns]
-            y_err_d = [np.mean(analysis1_results[alg][score_name]) - np.min(analysis1_results[alg][score_name]) for alg
-                       in analysis1_results.columns]
-            y_err_u = [np.max(analysis1_results[alg][score_name]) - np.mean(analysis1_results[alg][score_name]) for alg
-                       in analysis1_results.columns]
-            y_err = [y_err_d, y_err_u]
 
+            y_err = [np.std(analysis1_results[alg][score_name]) for alg
+                       in analysis1_results.columns]
             alg_names = analysis1_results.columns
             x_pos = np.arange(len(alg_names))
 
