@@ -1,10 +1,21 @@
 import pandas as pd
 from typing import List, Callable
+
+from numpy import mean
+
 from dg_models.DGModel import DGModel
 from ml_models.MachineLearner import MachineLearner
 from utils.Data import Data
 import numpy as np
-
+import rpy2
+import rpy2.robjects as robjects
+import rpy2.robjects.packages as rpackages
+import rpy2.robjects as ro
+from rpy2.robjects import pandas2ri
+from rpy2.robjects.conversion import localconverter
+from rpy2.robjects.vectors import DataFrame, StrVector
+from rpy2.robjects.packages import importr
+pandas2ri.activate()
 
 class Evaluator:
     def __init__(self, ml_models: List[MachineLearner], dg_models: List[DGModel], real_models: List[DGModel],
@@ -36,6 +47,16 @@ class Evaluator:
                 result_per_repetition_per_model = self._develop_ml_model(ml_model, orig_train_data, test_data)
                 for score_name in results.index.values.tolist():
                     results[ml_model.name][score_name].append(result_per_repetition_per_model[score_name])
+
+        difference_to_average_by_ml = {}
+        for ml_model in self.ml_models:
+            average_performance = np.mean(results[ml_model.name][score_name])
+            list_of_difference_to_average = []
+            for num_repititon in range(n_repetitions):
+                difference_to_average = abs(results[ml_model.name][score_name][num_repititon] - average_performance)
+                list_of_difference_to_average.append(difference_to_average)
+            difference_to_average_by_ml[ml_model.name] = list_of_difference_to_average
+        pd.DataFrame(difference_to_average_by_ml).to_csv("analysis_0_benchmarking_infinite_relevancy.csv") #store every repitition difference to true performance by ML
         return results
 
     def analysis_1_per_dg_model(self, dg_model_real: DGModel, n_samples: int, tr_frac: float, n_btstrps: int):
@@ -60,7 +81,73 @@ class Evaluator:
                 result_per_btsrtp_per_model = self._develop_ml_model(ml_model, btstr_tr, test_data)
                 for score_name in btstrp_results.index.values.tolist():
                     btstrp_results[ml_model.name][score_name].append(result_per_btsrtp_per_model[score_name])
+
+        #difference_to_average_by_ml = {}
+        #for ml_model in self.ml_models:
+        #    average_performance = np.mean(btstrp_results[ml_model.name][score_name])
+        #    list_of_difference_to_average = []
+        #    for num_btr in range(n_btstrps):
+        #        difference_to_average = abs(btstrp_results[ml_model.name][score_name][num_btr] - average_performance)
+        #        list_of_difference_to_average.append(difference_to_average)
+        #    difference_to_average_by_ml[ml_model.name] = list_of_difference_to_average
+        #pd.DataFrame(difference_to_average_by_ml).to_csv("analysis_1_benchmarking_limited_relevancy.csv")
         return btstrp_results
+
+    def analysis_2_per_dg_model(self, dg_model_real: DGModel, n_learning: int, n_train: int,n_test: int, n_repetitions):
+        list_of_results = {}
+        metrics = {}
+        dg_metrics, learning_data_real, test_data = self._get_performance_by_repetition(dg_model_real, n_train+n_test,0.5, n_repetitions)
+        #list_of_results["Real-world"] = dg_metrics
+        for dg_model in self.dg_models:
+            repetition_results = pd.DataFrame(data=[[[] for _ in range(len(self.ml_models))] for __ in range(len(self.scores))],index=[sc.__name__ for sc in self.scores],columns=[md.name for md in self.ml_models])
+            for _ in range(n_repetitions):
+                dg_metrics, _, _ = self._evaluate_bnlearn_dg_model(dg_model=dg_model, learning_data_real=learning_data_real,n_learning=n_learning, n_train=n_train, n_test=n_test,SLClass=dg_model.SLClass)
+                for score_name in repetition_results.index.values.tolist():
+                    for ml_model in self.ml_models:
+                        repetition_results[ml_model.name][score_name].append(dg_metrics[dg_model.SLClass][ml_model.name][score_name])
+            list_of_results[dg_model.SLClass] = repetition_results
+        return list_of_results
+
+    def analysis_3_per_dg_model(self, dg_model_real: DGModel, n_learning: int, n_train: int,n_test: int, n_true_repetitions: int, n_learning_repititions: int, n_sl_repititions: int):
+        dg_metrics, train_data, test_data = self._get_performance_by_repetition(dg_model_real, n_train+n_test,0.5, n_true_repetitions)
+        list_of_top_true_ranks = []
+        list_of_top_ranks_from_practitioner_limited_world = []
+        list_of_top_ranks_from_practitioner_sl_world = {"hc":[],"tabu":[],"rsmax2":[],"mmhc":[],"h2pc":[]}
+        list_of_comparable_ranks_in_one_repitition = {} #used to store all ml methods to pick the max-scored option
+        for rep in range(0, n_true_repetitions):
+            for ml in dg_metrics:
+                list_of_comparable_ranks_in_one_repitition[ml] = dg_metrics[ml]['balanced_accuracy_score'][rep]
+            list_of_top_true_ranks.append(max(list_of_comparable_ranks_in_one_repitition, key=list_of_comparable_ranks_in_one_repitition.get))
+            list_of_comparable_ranks_in_one_repitition.clear()
+        for learning_rep in range(0, n_learning_repititions):
+            train_data, test_data = self._get_train_and_test_from_dg(dg_model_real, n_train+n_test, 0.5)
+            limited_dg_metrics = self._develop_all_ml_models(train_data, test_data)
+            for ml in self.ml_models:
+                list_of_comparable_ranks_in_one_repitition[ml.name] = limited_dg_metrics[ml.name]['balanced_accuracy_score']
+            list_of_top_ranks_from_practitioner_limited_world.append(max(list_of_comparable_ranks_in_one_repitition, key=list_of_comparable_ranks_in_one_repitition.get))
+            list_of_comparable_ranks_in_one_repitition.clear()
+            for dg_model in self.dg_models:
+                repetition_results = pd.DataFrame(
+                    data=[[[] for _ in range(len(self.ml_models))] for __ in range(len(self.scores))],
+                    index=[sc.__name__ for sc in self.scores], columns=[md.name for md in self.ml_models])
+                for sl_rep in range(0, n_sl_repititions):
+                    sl_dg_metrics, sl_train_data, sl_test_data = self._evaluate_bnlearn_dg_model(dg_model=dg_model,learning_data_real=train_data,n_learning=n_learning, n_train=n_train,n_test=n_test, SLClass=dg_model.SLClass)
+                    for score_name in repetition_results.index.values.tolist():
+                        for ml in self.ml_models:
+                            repetition_results[ml.name][score_name].append(sl_dg_metrics[dg_model.SLClass][ml.name][score_name])
+                for ml in self.ml_models:
+                    repetition_results[ml.name][score_name] = mean(repetition_results[ml.name][score_name])
+                    list_of_comparable_ranks_in_one_repitition[ml.name] = repetition_results[ml.name]['balanced_accuracy_score']
+                top_rank_per_sl = max(list_of_comparable_ranks_in_one_repitition, key=list_of_comparable_ranks_in_one_repitition.get)
+                list_of_comparable_ranks_in_one_repitition.clear()
+                list_of_top_ranks_from_practitioner_sl_world[dg_model.SLClass].append(top_rank_per_sl)
+        print("Infinite scenario ranks: ")
+        print(list_of_top_true_ranks)
+        print("Limited real-world scenario ranks: ")
+        print(list_of_top_ranks_from_practitioner_limited_world)
+        print("SL-supported scenario ranks: ")
+        print(list_of_top_ranks_from_practitioner_sl_world)
+        return [list_of_top_true_ranks, list_of_top_ranks_from_practitioner_limited_world, list_of_top_ranks_from_practitioner_sl_world]
 
     def analysis_coef_per_dg_model(self, dg_model_real: DGModel, n_learning: int = 100):
         corr_dict = {}
@@ -71,25 +158,6 @@ class Evaluator:
             _, corr_dict[dg_model.name] = self._get_corr(dg_model)
 
         return corr_dict
-
-    def analysis_3_per_dg_model(self, dg_model_real: DGModel, n_learning: int, n_train: int,n_test: int):
-        metrics = {}
-        dg_metrics, learning_data, test_data = self._evaluate_dg_model(dg_model_real, n_learning=n_learning,
-                                                                       n_train=n_train, n_test=n_test)
-        metrics.update(dg_metrics)
-        for dg_model in self.dg_models:
-            print("working on ",dg_model.name)
-            dg_model.fit(learning_data)
-            # todo fix issue with PC
-            # assert len(dg_model_real.model.nodes) == len(test_data.all.columns)
-            # todo change for non pgmpy models
-            if dg_model.num_vars != len(test_data.all.columns):
-                continue
-            dg_metrics, _, _ = self._evaluate_dg_model(dg_model=dg_model, n_learning=-1, n_train=n_train, n_test=n_test,
-                                                       test_data=test_data)
-            metrics.update(dg_metrics)
-        print(metrics)
-        return metrics
 
     def analysis_violin_per_dg_model(self, dg_model_real: DGModel, n_samples: int, tr_frac: float, n_reps: int):
         scores_per_dg_model = {}
@@ -105,7 +173,7 @@ class Evaluator:
             scores_per_dg_model[dg_model.name] = dg_model_scores
         return scores_per_dg_model
 
-    def analysis_3b_per_dg_model(self, dg_model_real: DGModel,n_samples: int, tr_frac: float, n_reps: int):
+    def analysis_2b_per_dg_model(self, dg_model_real: DGModel,n_samples: int, tr_frac: float, n_reps: int):
         scores_per_dg_model = {}
         dg_model_real_scores, train_data, test_data = self._get_performance_by_repetition(dg_model_real, n_samples,
                                                                                           tr_frac, n_reps)
@@ -143,11 +211,123 @@ class Evaluator:
         return metrics
 
     def _evaluate_dg_model(self, dg_model: DGModel, n_learning: int, n_train: int, n_test: int,
-                           test_data: Data = None):  # level 2 repetition
+                           test_data: Data = None):
+
         train_data = dg_model.generate(n_train, self.outcome_name)
 
         if test_data is None:
             test_data = dg_model.generate(n_test, self.outcome_name)
+
+        metrics = self._develop_all_ml_models(train_data, test_data)
+        metrics = {f'{dg_model.name}': metrics}
+        learning_data = train_data[0:n_learning:1] if n_learning > 0 else None
+        return metrics, learning_data, test_data
+
+    def _evaluate_bnlearn_dg_model(self, dg_model: DGModel, learning_data_real, n_learning: int, n_train: int, n_test: int,SLClass: str):
+        learning_data_real = learning_data_real.all
+        learning_data_real.loc[0] = 1
+
+        #learning_data_real.loc[0,"AppDtGnTm"] = 1
+        #learning_data_real.loc[0, "PrtThread"] = 1
+        #learning_data_real.loc[0, "TnrSpply"] = 1
+        #learning_data_real.loc[0, "AvlblVrtlMmry"] = 1
+        #learning_data_real.loc[0, "AppData"] = 1
+        #learning_data_real.loc[0, "AppOK"] = 1
+        #learning_data_real.loc[0, "CblPrtHrdwrOK"] = 1
+
+
+        #print(count(learning_data_real$PrtThread))
+        #print(table(is.na(training_output)))
+        #print(sapply(learning_data_real, levels))
+
+        if SLClass == "hc":
+            robjects.r('''
+                        library(bnlearn)
+                        library(plyr)
+                        bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
+                        learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
+                        my_bn <- hc(learning_data_real, replace.unidentifiable=TRUE, method='bayes')
+                        fit = bn.fit(my_bn, learning_data_real)
+                        training_output = rbn(my_bn, n_train, learning_data_real)
+                        testing_output = rbn(my_bn, n_test, learning_data_real)
+                        training_output[is.na(training_output)] <- 0
+                        testing_output[is.na(testing_output)] <- 0
+                        list_output <- list(training_output, testing_output)
+                        }
+                        ''')
+        elif SLClass == "tabu":
+            robjects.r('''
+                        library(bnlearn)
+                        library(plyr)
+                        bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
+                        learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
+                        my_bn <- tabu(learning_data_real)
+                        fit = bn.fit(my_bn, learning_data_real)
+                        training_output = rbn(my_bn, n_train, learning_data_real)
+                        testing_output = rbn(my_bn, n_test, learning_data_real)
+                        training_output[is.na(training_output)] <- 0
+                        testing_output[is.na(testing_output)] <- 0
+                        list_output <- list(training_output, testing_output)
+                        }
+                        ''')
+        elif SLClass == "rsmax2":
+            robjects.r('''
+                        library(bnlearn)
+                        library(plyr)
+                        bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
+                        learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
+                        my_bn <- rsmax2(learning_data_real)
+                        fit = bn.fit(my_bn, learning_data_real)
+                        training_output = rbn(my_bn, n_train, learning_data_real)
+                        testing_output = rbn(my_bn, n_test, learning_data_real)
+                        training_output[is.na(training_output)] <- 0
+                        testing_output[is.na(testing_output)] <- 0
+                        list_output <- list(training_output, testing_output)
+                        }
+                        ''')
+        elif SLClass == "mmhc":
+            robjects.r('''
+                        library(bnlearn)
+                        library(plyr)
+                        bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
+                        learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
+                        my_bn <- mmhc(learning_data_real)
+                        fit = bn.fit(my_bn, learning_data_real)
+                        training_output = rbn(my_bn, n_train, learning_data_real)
+                        testing_output = rbn(my_bn, n_test, learning_data_real)
+                        training_output[is.na(training_output)] <- 0
+                        testing_output[is.na(testing_output)] <- 0
+                        list_output <- list(training_output, testing_output)
+                        }
+                        ''')
+        elif SLClass == "h2pc":
+            robjects.r('''
+                        library(bnlearn)
+                        library(plyr)
+                        bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
+                        learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
+                        my_bn <- h2pc(learning_data_real)
+                        fit = bn.fit(my_bn, learning_data_real)
+                        training_output = rbn(my_bn, n_train, learning_data_real)
+                        testing_output = rbn(my_bn, n_test, learning_data_real)
+                        training_output[is.na(training_output)] <- 0
+                        testing_output[is.na(testing_output)] <- 0
+                        list_output <- list(training_output, testing_output)
+                        }
+                        ''')
+
+        bn_hc = robjects.r['bn_learn']
+        bn_train_output = bn_hc(learning_data_real, n_train, n_test)
+
+        train_data = np.array(bn_train_output[0])
+        test_data = np.array(bn_train_output[1])
+        X = pd.DataFrame(train_data[:, :-1])
+        y = pd.Series(train_data[:, -1], name="Y")
+        train_data = Data(name="train", X=X, y=y)
+        X = pd.DataFrame(test_data[:, :-1])
+        y = pd.Series(test_data[:, -1], name="Y")
+        test_data = Data(name="test", X=X, y=y)
+
         metrics = self._develop_all_ml_models(train_data, test_data)
         metrics = {f'{dg_model.name}': metrics}
         learning_data = train_data[0:n_learning:1] if n_learning > 0 else None

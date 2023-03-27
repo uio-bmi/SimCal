@@ -1,3 +1,5 @@
+import os
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import scipy
@@ -6,9 +8,12 @@ from scipy.stats import sem
 import numpy as np
 import seaborn as sns
 
+figuredirname = os.sep+"figures"+os.sep
 
 class Postprocessing():
     def __init__(self):
+        if os.path.isdir(os.getcwd() + figuredirname) == False:
+            os.mkdir(os.getcwd() + figuredirname)
         pass
 
     def plot_analysis0(self, analysis0_results: pd.DataFrame):
@@ -32,7 +37,7 @@ class Postprocessing():
 
             # Save the figure and show
             plt.tight_layout()
-            plt.savefig('analysis_0_bar_plot_with_error_bars.png')
+            plt.savefig(os.getcwd()+figuredirname+'analysis_0_bar_plot_with_error_bars.png')
             plt.show()
 
     def plot_analysis1(self, analysis1_results: pd.DataFrame):
@@ -40,7 +45,7 @@ class Postprocessing():
         for score_name in score_names:
             y = [np.mean(analysis1_results[alg][score_name]) for alg in analysis1_results.columns]
 
-            y_err = [np.std(analysis1_results[alg][score_name]) for alg
+            y_err = [scipy.stats.sem(analysis1_results[alg][score_name]) for alg
                        in analysis1_results.columns]
             alg_names = analysis1_results.columns
             x_pos = np.arange(len(alg_names))
@@ -56,60 +61,105 @@ class Postprocessing():
 
             # Save the figure and show
             plt.tight_layout()
-            plt.savefig('analysis_1_bar_plot_with_error_bars.png')
+            plt.savefig(os.getcwd()+figuredirname+'analysis_1_bar_plot_with_error_bars.png')
             plt.show()
 
     def plot_analysis2(self, analysis2_results: dict):
-        corr_df = self.corr_dict_to_pd(analysis2_results)
-        sns_plot = sns.scatterplot(x='pair', y='correlation', data=corr_df, hue='world', alpha=0.6, style="world")
-        plt.show()
+        for SL_result in analysis2_results:
+            score_names = ['balanced_accuracy_score']
+            for score_name in score_names:
+                y = [np.mean(analysis2_results[SL_result][alg][score_name]) for alg in analysis2_results[SL_result].columns]
 
-    def plot_analysis_coef_gks(self, analysis2_results: dict, pipeline: str = "pipeline1"):
-        markers = ['x', 'o', '^', '*', '+', 's', 'p']
-        c = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
-        corr_df = self.corr_dict_to_pd(analysis2_results)
-        real_corr = corr_df.loc[corr_df['world'] == pipeline].correlation
-        for i, world in enumerate(set(corr_df.world)):
-            if world == "PC":
-                continue
-            world_corr = corr_df.loc[corr_df['world'] == world].correlation
+                y_err = [np.std(analysis2_results[SL_result][alg][score_name]) for alg
+                         in analysis2_results[SL_result].columns]
+                alg_names = analysis2_results[SL_result].columns
+                x_pos = np.arange(len(alg_names))
 
-            plt.scatter(real_corr.tolist(), world_corr.tolist(), marker=markers[i], c=c[i], label=world)
+                fig, ax = plt.subplots()
+                ax.bar(x_pos, y, yerr=y_err, align='center', alpha=0.5, ecolor='black', capsize=10)
+                ax.set_ylim(0, 1)
+                ax.set_ylabel(score_name)
+                ax.set_xticks(x_pos)
+                ax.set_xticklabels(alg_names, rotation=90)
+                ax.set_title(f'{score_name} of different ML models for '+ SL_result)
+                ax.yaxis.grid(True)
 
-        plt.title("pair-wise correlations of learned vs real world")
-        plt.xlabel("real world correlations")
-        plt.ylabel("learned world correlations")
-        plt.legend()
+                # Save the figure and show
+                plt.tight_layout()
+                plt.savefig(os.getcwd()+figuredirname+'analysis_2_bar_plot_with_error_bars.png')
+                plt.show()
+
+    def plot_analysis3(self, analysis3_results: list):
+        matchs_from_practitioner_limited_world = 0
+        list_of_top_true_ranks = analysis3_results[0]
+        list_of_top_ranks_from_practitioner_limited_world = analysis3_results[1]
+        list_of_top_ranks_from_practitioner_sl_world = analysis3_results[2]
+        data = {"hc":0,"tabu":0,"rsmax2":0,"mmhc":0,"h2pc":0}
+        for rank_at_repitition in range(0, len(list_of_top_true_ranks)):
+            if list_of_top_ranks_from_practitioner_limited_world[rank_at_repitition] == list_of_top_true_ranks[rank_at_repitition]:
+                matchs_from_practitioner_limited_world += 1
+        for sl in data.keys():
+            sl_match_count = 0
+            for rank_at_repitition in range(0, len(list_of_top_true_ranks)):
+                if list_of_top_ranks_from_practitioner_sl_world[sl][rank_at_repitition] == list_of_top_true_ranks[rank_at_repitition]:
+                    sl_match_count += 1
+            data[sl] = sl_match_count/len(list_of_top_true_ranks)
+        data["limited-real"] = matchs_from_practitioner_limited_world/len(list_of_top_true_ranks)
+        courses = list(data.keys())
+        values = list(data.values())
+        fig = plt.figure(figsize=(10, 10))
+        # creating the bar plot
+        plt.bar(courses, values, color='maroon',width=0.4)
+        # Save the figure and show
+        plt.xlabel("Technique")
+        plt.ylabel("Percentage of correctly recommended ML methods")
+        plt.title("Proportion of matched ML methods to the true benchmarks")
         plt.tight_layout()
-        plt.savefig('scatter_plot_of_ccs.png')
+        plt.savefig(os.getcwd()+figuredirname+'analysis_3_bar_plot.png')
         plt.show()
 
-    def plot_analysis3(self, analysis3_results: dict):
 
-        for score_name in TD(analysis3_results, 2).keys():
-            data = self.dict_to_list(score_name, analysis3_results)
-            worlds = list(analysis3_results.keys())
-            df = pd.DataFrame(data, columns=["ML", *worlds])
-            methods = df.transpose().iloc[0].values
-            grouped_df = df.transpose()
-            grouped_df = grouped_df.rename(columns=grouped_df.iloc[0]).drop(grouped_df.index[0])
-            grouped_df = grouped_df.reset_index()
+        #for score_name in TD(analysis2_results, 2).keys():
+        #    data = self.dict_to_list(score_name, analysis2_results)
+        #    worlds = list(analysis2_results.keys())
+        #    df = pd.DataFrame(data, columns=["ML", *worlds])
+        #    methods = df.transpose().iloc[0].values
+        #    grouped_df = df.transpose()
+        #    grouped_df = grouped_df.rename(columns=grouped_df.iloc[0]).drop(grouped_df.index[0])
+        #    grouped_df = grouped_df.reset_index()
+        #    ax = grouped_df.plot(x="index", y=methods, kind="bar", figsize=(11, 11))
+        #    ax.set_ylim(0, 1)
+        #    ax.set_ylabel(score_name)
+        #    plt.title("Inter-world Benchmarking of ML Pipelines Grouped by SL")
+        #    plt.tight_layout()
+        #    plt.savefig('analysis_2_interworld_benchmarking_of_mlpipelines_by_SL.png')
+        #    plt.show()
+        #    ax = df.plot(x="ML", y=worlds, kind="bar", figsize=(11, 11))
+        #    ax.set_ylim(0, 1)
+        #    ax.set_ylabel(score_name)
+        #    plt.title("Inter-world Benchmarking of ML Pipelines Grouped by ML")
+        #    plt.tight_layout()
+        #    plt.savefig('analysis_2_interworld_benchmarking_of_mlpipelines_by_ML.png')
+        #    plt.show()
 
-            #ax = df.plot(x="ML", y=worlds, kind="bar", figsize=(11, 11))
-            ax = grouped_df.plot(x="index", y=methods, kind="bar", figsize=(11, 11))
-            ax.set_ylim(0, 1)
-            ax.set_ylabel(score_name)
-            plt.title("Inter-world Benchmarking of ML Pipelines Grouped by SL")
+        def plot_analysis_coef_gks(self, analysis2_results: dict, pipeline: str = "pipeline1"):
+            markers = ['x', 'o', '^', '*', '+', 's', 'p']
+            c = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
+            corr_df = self.corr_dict_to_pd(analysis2_results)
+            real_corr = corr_df.loc[corr_df['world'] == pipeline].correlation
+            for i, world in enumerate(set(corr_df.world)):
+                if world == "PC":
+                    continue
+                world_corr = corr_df.loc[corr_df['world'] == world].correlation
+
+                plt.scatter(real_corr.tolist(), world_corr.tolist(), marker=markers[i], c=c[i], label=world)
+
+            plt.title("pair-wise correlations of learned vs real world")
+            plt.xlabel("real world correlations")
+            plt.ylabel("learned world correlations")
+            plt.legend()
             plt.tight_layout()
-            plt.savefig('interworld_benchmarking_of_mlpipelines_by_SL.png')
-            plt.show()
-
-            ax = df.plot(x="ML", y=worlds, kind="bar", figsize=(11, 11))
-            ax.set_ylim(0, 1)
-            ax.set_ylabel(score_name)
-            plt.title("Inter-world Benchmarking of ML Pipelines Grouped by ML")
-            plt.tight_layout()
-            plt.savefig('interworld_benchmarking_of_mlpipelines_by_ML.png')
+            plt.savefig('scatter_plot_of_ccs.png')
             plt.show()
 
     def plot_analysis_violin(self, analysis4_results: dict, score_name='balanced_accuracy_score'):
@@ -123,7 +173,7 @@ class Postprocessing():
         plt.savefig('repeated_interworld_benchmarking_of_mlpipelines.png')
         plt.show()
 
-    def plot_analysis3b(self, analysis4_results: dict):
+    def plot_analysis2b(self, analysis4_results: dict):
         methods = ['DecisionTreeClassifier','RandomForestClassifier','KNeighborsClassifier','GradientBoostingClassifier','SVCRbf','SVCLinear','SVCSigmoid','LogisticLASSO','MLPClassifier']
         # Additional NBMethods 'GaussianNB','BernoulliNB','MultinomialNB','ComplementNB','CategoricalNB',
         method_max_real = {}
@@ -139,13 +189,8 @@ class Postprocessing():
             i += 1
             valuesList = [measure[key] for key in measure]
             real_scores_list.append(np.mean(valuesList))
-        #print("real-world measures:")
-        #print(real_scores_list)
         score_df.drop('pipeline1', inplace=True, axis=1)
-        #print("learned-world measures:")
         for (columnName, columnData) in score_df.iteritems():
-            #print('Column Name : ', columnName)
-            #print('Column Contents : ', columnData.values)
             for learned_measure in columnData.values:
                 learnedValuesList = [learned_measure[v] for v in learned_measure]
                 learned_scores_list.append(np.mean(learnedValuesList))

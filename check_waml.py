@@ -1,5 +1,6 @@
 import random
 
+import pybnesian as pybnesian
 from sklearn import svm
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.linear_model import *
@@ -12,9 +13,10 @@ import warnings
 # pip install git+https://github.com/xunzheng/notears.git#egg=notears if notears not installed
 from sklearn.tree import DecisionTreeClassifier
 
-from dg_models.PgmpyLearner import PgmpyModel
 from dg_models.NotearsLearner import NotearsLearner
 from dg_models.DagsimModel import DagsimModel
+from dg_models.PgmpyLearner import PgmpyModel
+from dg_models.BnlearnLearner import Bnlearner
 from ml_models.SklearnModel import SklearnModel
 import numpy as np
 from dagsim.base import Graph, Node
@@ -26,10 +28,15 @@ from sklearn.metrics import accuracy_score, balanced_accuracy_score, auc, averag
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # ML and SL configuration for pipelines
-list_pgmpy = [PgmpyModel(f'{learner.__name__}', learner, "Y") for learner in
-              [HillClimbSearch, TreeSearch, MmhcEstimator]]  # , ExhaustiveSearch]]
+#list_pgmpy = [PgmpyModel(f'{learner.__name__}', learner, "Y") for learner in
+#              [PC, HillClimbSearch, TreeSearch, MmhcEstimator, ExhaustiveSearch]]
 
-no_tears_linear_default = NotearsLearner(name="notears_linear", SLClass="linear", loss_type='logistic', lambda1=0.01)
+#list_pybnesian = [PyBNesianModel(f'{learner.__name__}', learner, "Y") for learner in
+#              [pybnesian.hc, pybnesian.GreedyHillClimbing, pybnesian.PC, pybnesian.MMPC, pybnesian.MMHC]]
+
+bnlearn_list = [Bnlearner(name="hc", SLClass="hc"), Bnlearner(name="tabu", SLClass="tabu"), Bnlearner(name="rsmax2", SLClass="rsmax2"), Bnlearner(name="mmhc", SLClass="mmhc"), Bnlearner(name="h2pc", SLClass="h2pc")]
+
+no_tears_linear_default = [NotearsLearner(name="notears_linear", SLClass="linear", loss_type='logistic', lambda1=0.01)]
 
 list_sklearn = [SklearnModel(f'{learner.__name__}', learner) for learner in
                 [DecisionTreeClassifier, RandomForestClassifier, KNeighborsClassifier, GradientBoostingClassifier]] #Additional NB classifiers GaussianNB, BernoulliNB, MultinomialNB, ComplementNB, CategoricalNB,
@@ -78,12 +85,12 @@ Prior9 = Node(name="PrtDriver", function=get_PrtDriver)
 Prior10 = Node(name="PrtThread", function=get_PrtThread)
 Prior11 = Node(name="EMFOK", function=get_EMFOK,args=[Prior3, Prior4, Prior10])
 Prior12 = Node(name="GDIIN", function=get_GDIIN,args=[Prior3, Prior5, Prior11])
-Prior13 = Node(name="DrvSet", function=get_DrvSet)
+Prior13 = Node(name="DrYvSet", function=get_DrvSet)
 Prior14 = Node(name="DrvOK", function=get_DrvOK)
 Prior15 = Node(name="GDIOUT", function=get_GDIOUT,args=[Prior9, Prior12, Prior13, Prior14])
 Prior16 = Node(name="PrtSel", function=get_PrtSel)
 Prior17 = Node(name="PrtDataOut", function=get_PrtDataOut,args=[Prior15, Prior16])
-Prior18 = Node(name="PrtPath", function=get_PrtPath)
+Prior18 = Node(name="Y", function=get_PrtPath)
 Prior19 = Node(name="NtwrkCnfg", function=get_NtwrkCnfg)
 Prior20 = Node(name="PTROFFLINE", function=get_PTROFFLINE)
 Prior21 = Node(name="NetOK", function=get_NetOK,args=[Prior18, Prior19, Prior20])
@@ -91,7 +98,7 @@ Prior22 = Node(name="PrtCbl", function=get_PrtCbl)
 Prior23 = Node(name="PrtPort", function=get_PrtPort)
 Prior24 = Node(name="CblPrtHrdwrOK", function=get_CblPrtHrdwrOK)
 Prior25 = Node(name="LclOK", function=get_LclOK,args=[Prior22, Prior23, Prior24])
-Prior26 = Node(name="Y", function=get_DSApplctn)
+Prior26 = Node(name="DS_Application", function=get_DSApplctn)
 Prior27 = Node(name="PrtMpTPth", function=get_PrtMpTPth)
 Prior28 = Node(name="DS_NTOK", function=get_DS_NTOK,args=[Prior3, Prior18, Prior27, Prior19, Prior20])
 Prior29 = Node(name="DS_LCLOK", function=get_DS_LCLOK,args=[Prior3, Prior22, Prior23, Prior24])
@@ -155,28 +162,30 @@ listNodes = [Prior1, Prior2, Prior3, Prior4, Prior5, Prior6, Prior7, Prior8,Prio
              Prior61, Prior62, Prior63, Prior64, Prior65, Prior66, Prior67, Prior68, Prior69, Prior70,
              Prior71, Prior72, Prior73, Prior74, Prior75, Prior76]
 printer = Graph(name="Windows 95 Printer Example - Real-world", list_nodes=listNodes)
-ds_model = DagsimModel("pipeline1", printer)
+ds_model = DagsimModel("Real-world", printer)
 
-printer.draw()
+#printer.draw()
 
-evaluator = Evaluator(ml_models=list_sklearn, dg_models=[*list_pgmpy, no_tears_linear_default], real_models=[ds_model],
+evaluator = Evaluator(ml_models=list_sklearn, dg_models=bnlearn_list, real_models=[ds_model],
                       scores=[balanced_accuracy_score], outcome_name="Y")
 
 pp = Postprocessing()
 
-analysis0_results = evaluator.analysis_0_per_dg_model(dg_model_real=ds_model, n_repetitions=100, n_samples=50, tr_frac=0.5)
-pp.plot_analysis0(analysis0_results)
+#analysis0_results = evaluator.analysis_0_per_dg_model(dg_model_real=ds_model, n_repetitions=1000, n_samples=2000, tr_frac=0.5)
+#pp.plot_analysis0(analysis0_results)
 
-analysis1_results = evaluator.analysis_1_per_dg_model(dg_model_real=ds_model, n_samples=50, tr_frac=0.5, n_btstrps=100)
-pp.plot_analysis1(analysis1_results)
+#analysis1_results = evaluator.analysis_1_per_dg_model(dg_model_real=ds_model, n_samples=1000, tr_frac=0.5, n_btstrps=100)
+#pp.plot_analysis1(analysis1_results)
 
-#analysis3 = evaluator.analysis_3_per_dg_model(ds_model, n_learning=1000, n_train=1000,n_test=500)
-##pp.plot_analysis3(analysis3_results=analysis3)
+#analysis2 = evaluator.analysis_2_per_dg_model(ds_model, n_learning=100, n_train=1000,n_test=1000, n_repetitions=1000)
+#pp.plot_analysis2(analysis2)
 
-#analysis3b = evaluator.analysis_3b_per_dg_model(ds_model, n_samples=10000, tr_frac=0.5, n_reps=20)
-#pp.plot_analysis3b(analysis3b)
+analysis3 = evaluator.analysis_3_per_dg_model(ds_model, n_learning=100, n_train=1000,n_test=1000, n_true_repetitions=100, n_learning_repititions=100, n_sl_repititions=100)
+pp.plot_analysis3(analysis3)
 
-# Extra analysis, DAG-benchmarking and violin plot
+# Extra analysis, DAG-benchmarking, scatterplots and violin plot
+#analysis2b = evaluator.analysis_2b_per_dg_model(ds_model, n_samples=1000, tr_frac=0.5,n_reps=20)
+#pp.plot_analysis2b(analysis2b)
 #analysis_coef = evaluator.analysis_coef_per_dg_model(ds_model)
 #pp.plot_analysis_coef_gks(analysis_coef)
 #analysis_violin_repeat = evaluator.analysis_violin_per_dg_model(ds_model, 200, 0.5, 10)

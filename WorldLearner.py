@@ -1,9 +1,11 @@
 import bnlearn
 from notears import utils
-from utils.notears_class import Notears
+import utils.notears_class
 from pgmpy.models import BayesianModel
 from pgmpy.estimators import BayesianEstimator
 
+from dg_models.NotearsLearner import NotearsLearner
+from dg_models.PyBNesianLearner import PyBNesianModel
 
 class WorldLearner:
     def __init__(self, model_class, **kwargs):
@@ -31,7 +33,10 @@ class WorldLearner:
             self.model = self.model_class()
             self.model.from_samples(train_data)
         elif self.package == "notears":
-            self.model = Notears(**self.kwargs)
+            self.model = NotearsLearner(**self.kwargs)
+            self.model.fit(train_data)
+        elif self.package == "pybnesian":
+            self.model = PyBNesianModel(**self.kwargs)
             self.model.fit(train_data)
 
     def generate(self, num_samples):
@@ -41,3 +46,6 @@ class WorldLearner:
             return self.model.sample(num_samples)
         elif self.package == "notears":
             return self.model.simulate(num_samples)
+        elif self.package == "pybnesian":
+            return self.model.sample(num_samples)
+
