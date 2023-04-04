@@ -1,6 +1,5 @@
 import random
 
-import pybnesian as pybnesian
 from sklearn import svm
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.linear_model import *
@@ -8,14 +7,13 @@ from sklearn.naive_bayes import BernoulliNB, GaussianNB, MultinomialNB, Compleme
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn import linear_model
-from pgmpy.estimators import *
 import warnings
 # pip install git+https://github.com/xunzheng/notears.git#egg=notears if notears not installed
 from sklearn.tree import DecisionTreeClassifier
 
 from dg_models.NotearsLearner import NotearsLearner
 from dg_models.DagsimModel import DagsimModel
-from dg_models.PgmpyLearner import PgmpyModel
+from dg_models.PomegranateLearner import PomegranateLearner
 from dg_models.BnlearnLearner import Bnlearner
 from ml_models.SklearnModel import SklearnModel
 import numpy as np
@@ -28,15 +26,10 @@ from sklearn.metrics import accuracy_score, balanced_accuracy_score, auc, averag
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # ML and SL configuration for pipelines
-#list_pgmpy = [PgmpyModel(f'{learner.__name__}', learner, "Y") for learner in
-#              [PC, HillClimbSearch, TreeSearch, MmhcEstimator, ExhaustiveSearch]]
-
-#list_pybnesian = [PyBNesianModel(f'{learner.__name__}', learner, "Y") for learner in
-#              [pybnesian.hc, pybnesian.GreedyHillClimbing, pybnesian.PC, pybnesian.MMPC, pybnesian.MMHC]]
-
-bnlearn_list = [Bnlearner(name="hc", SLClass="hc"), Bnlearner(name="tabu", SLClass="tabu"), Bnlearner(name="rsmax2", SLClass="rsmax2"), Bnlearner(name="mmhc", SLClass="mmhc"), Bnlearner(name="h2pc", SLClass="h2pc")]
-
-no_tears_linear_default = [NotearsLearner(name="notears_linear", SLClass="linear", loss_type='logistic', lambda1=0.01)]
+#list_pgmpy = [PgmpyModel(f'{learner.__name__}', learner, "Y") for learner in [PC, HillClimbSearch, TreeSearch, MmhcEstimator, ExhaustiveSearch]]
+#no_tears_linear_default = [NotearsLearner(name="notears_linear", SLClass="notears_linear", loss_type='logistic', lambda1=0.01)]
+#PomegranateLearner(name="greedy", SLClass="exact", algorithm="exact")]#PomegranateLearner(name="greedy", SLClass="greedy")]
+structural_learner_list = [Bnlearner(name="hc", SLClass="hc"), Bnlearner(name="tabu", SLClass="tabu"), Bnlearner(name="rsmax2", SLClass="rsmax2"), Bnlearner(name="mmhc", SLClass="mmhc"), Bnlearner(name="h2pc", SLClass="h2pc")]#NotearsLearner(name="notears_linear", SLClass="notears_linear", loss_type='logistic', lambda1=0.01)]
 
 list_sklearn = [SklearnModel(f'{learner.__name__}', learner) for learner in
                 [DecisionTreeClassifier, RandomForestClassifier, KNeighborsClassifier, GradientBoostingClassifier]] #Additional NB classifiers GaussianNB, BernoulliNB, MultinomialNB, ComplementNB, CategoricalNB,
@@ -151,7 +144,7 @@ Prior75 = Node(name="PrtStatMem", function=get_PrtStatMem,args=[Prior31])
 Prior76 = Node(name="PrtStatOff", function=get_PrtStatOff,args=[Prior6])
 # Y is the predicted node PrtData
 
-# Tested PrtData, DS_NTOK, NetOK, PC2PT, DSApplication
+# PrtData, PC2PT predictors show the most difference in ML benchmarks
 
 listNodes = [Prior1, Prior2, Prior3, Prior4, Prior5, Prior6, Prior7, Prior8,Prior9, Prior10, Prior11,
              Prior12, Prior13, Prior14, Prior15, Prior16, Prior17, Prior18, Prior19, Prior20,
@@ -166,7 +159,7 @@ ds_model = DagsimModel("Real-world", printer)
 
 #printer.draw()
 
-evaluator = Evaluator(ml_models=list_sklearn, dg_models=bnlearn_list, real_models=[ds_model],
+evaluator = Evaluator(ml_models=list_sklearn, dg_models=structural_learner_list, real_models=[ds_model],
                       scores=[balanced_accuracy_score], outcome_name="Y")
 
 pp = Postprocessing()
@@ -180,7 +173,7 @@ pp = Postprocessing()
 #analysis2 = evaluator.analysis_2_per_dg_model(ds_model, n_learning=100, n_train=1000,n_test=1000, n_repetitions=1000)
 #pp.plot_analysis2(analysis2)
 
-analysis3 = evaluator.analysis_3_per_dg_model(ds_model, n_learning=100, n_train=1000,n_test=1000, n_true_repetitions=100, n_learning_repititions=100, n_sl_repititions=100)
+analysis3 = evaluator.analysis_3_per_dg_model(ds_model, n_learning=10, n_train=1000,n_test=1000, n_true_repetitions=10, n_learning_repititions=10, n_sl_repititions=10)
 pp.plot_analysis3(analysis3)
 
 # Extra analysis, DAG-benchmarking, scatterplots and violin plot

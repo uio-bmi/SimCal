@@ -3,6 +3,7 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import scipy
+from numpy import mean
 from transpose_dict import TD
 from scipy.stats import sem
 import numpy as np
@@ -90,77 +91,108 @@ class Postprocessing():
                 plt.show()
 
     def plot_analysis3(self, analysis3_results: list):
-        matchs_from_practitioner_limited_world = 0
+        matches_from_practitioner_limited_world = 0
         list_of_top_true_ranks = analysis3_results[0]
-        list_of_top_ranks_from_practitioner_limited_world = analysis3_results[1]
-        list_of_top_ranks_from_practitioner_sl_world = analysis3_results[2]
-        data = {"hc":0,"tabu":0,"rsmax2":0,"mmhc":0,"h2pc":0}
+        list_of_top_true_accuracies = analysis3_results[1]
+        list_of_avg_all_ml_true_accuracies = analysis3_results[2]
+        list_of_top_ranks_from_practitioner_limited_world = analysis3_results[3]
+        list_of_top_accuracies_from_practitioner_limited_world = analysis3_results[4]
+        list_of_avg_all_ml_accuracies_from_practitioner_limited_world = analysis3_results[5]
+        list_of_top_ranks_from_practitioner_sl_world = analysis3_results[6]
+        list_of_top_accuracies_from_practitioner_sl_world = analysis3_results[7]
+        list_of_avg_all_ml_accuracies_from_practitioner_sl_world = analysis3_results[8]
+
+        # Create scatterplot of proportional performances for the top ml methods from alternative pathways
+        list_of_xy_pairs_limited_world = []
+        dict_of_xy_pairs_sl = {"hc": [], "tabu": [], "rsmax2": [], "mmhc": [], "h2pc": []}#"notears_linear": []}
+        for true_repitition in range(0, len(list_of_top_true_accuracies)):
+            list_of_xy_pairs_limited_world.append( (list_of_top_true_accuracies[true_repitition], list_of_top_accuracies_from_practitioner_limited_world[true_repitition]) )
+        for sl in dict_of_xy_pairs_sl.keys():
+            for true_repitition in range(0, len(list_of_top_true_ranks)):
+                dict_of_xy_pairs_sl[sl].append( (list_of_top_true_accuracies[true_repitition], list_of_top_accuracies_from_practitioner_sl_world[sl][true_repitition]) )
+        sl_colors = {"hc": 'red', "tabu": 'blue', "rsmax2": 'green', "mmhc": 'yellow', "h2pc": 'orange'}#,"notears_linear": "cyan"}
+        for sl in dict_of_xy_pairs_sl.keys():
+            x_true_accuracies, y_sl_accuracies = zip(*dict_of_xy_pairs_sl[sl])
+            plt.scatter(x=x_true_accuracies, y=y_sl_accuracies, c=sl_colors[sl], label=sl, alpha=0.7)
+        plt.title("Scatterplot of x-y pairs between true top and benchmarked top accuracies")
+        plt.xlabel("Accuracy (True Reference)")
+        plt.ylabel("Accuracy (Estimated Performance)")
+        x_true_accuracies, y_sl_accuracies = zip(*list_of_xy_pairs_limited_world)
+        plt.scatter(x=x_true_accuracies, y=y_sl_accuracies, c='black', label='limited-real', marker='x', alpha=1)
+        plt.legend(loc='lower left')
+        plt.style.use("seaborn")
+        plt.tight_layout()
+        plt.savefig(os.getcwd() + figuredirname + 'analysis_3_interworld_benchmarking_scatterplot_accuracies_between_max_method.png')
+        plt.show()
+
+        # Create proportion of matches bar graph
+        data = {"hc":0, "tabu":0,"rsmax2":0,"mmhc":0,"h2pc":0}#"notears_linear": 0}
         for rank_at_repitition in range(0, len(list_of_top_true_ranks)):
             if list_of_top_ranks_from_practitioner_limited_world[rank_at_repitition] == list_of_top_true_ranks[rank_at_repitition]:
-                matchs_from_practitioner_limited_world += 1
+                matches_from_practitioner_limited_world += 1
         for sl in data.keys():
             sl_match_count = 0
             for rank_at_repitition in range(0, len(list_of_top_true_ranks)):
                 if list_of_top_ranks_from_practitioner_sl_world[sl][rank_at_repitition] == list_of_top_true_ranks[rank_at_repitition]:
                     sl_match_count += 1
             data[sl] = sl_match_count/len(list_of_top_true_ranks)
-        data["limited-real"] = matchs_from_practitioner_limited_world/len(list_of_top_true_ranks)
+        data["limited-real"] = matches_from_practitioner_limited_world/len(list_of_top_true_ranks)
         courses = list(data.keys())
         values = list(data.values())
         fig = plt.figure(figsize=(10, 10))
-        # creating the bar plot
         plt.bar(courses, values, color='maroon',width=0.4)
-        # Save the figure and show
         plt.xlabel("Technique")
         plt.ylabel("Percentage of correctly recommended ML methods")
-        plt.title("Proportion of matched ML methods to the true benchmarks")
+        plt.title("Proportion of matched top ML methods to the true top benchmarks")
+        plt.style.use("seaborn")
         plt.tight_layout()
-        plt.savefig(os.getcwd()+figuredirname+'analysis_3_bar_plot.png')
+        plt.savefig(os.getcwd()+figuredirname+'analysis_3_interworld_benchmarking_barplot_proportion_matches_between_max_method.png')
         plt.show()
 
+        # Create scatterplot of proportional performances for all ml methods between alternative pathways
+        list_of_xy_pairs_all_methods_limited_world = []
+        dict_of_xy_pairs_sl = {"hc": [], "tabu": [], "rsmax2": [], "mmhc": [], "h2pc": []}#"notears_linear": []}
+        ml_methods = ["DecisionTreeClassifier","RandomForestClassifier","KNeighborsClassifier","GradientBoostingClassifier", "SVCRbf","SVCLinear", "SVCSigmoid","LogisticLASSO", "MLPClassifier"]
+        for ml_index, ml_method_label in enumerate(ml_methods):
+            list_of_xy_pairs_all_methods_limited_world.append((list_of_avg_all_ml_true_accuracies[ml_index],list_of_avg_all_ml_accuracies_from_practitioner_limited_world[ml_method_label]))
+        for sl in dict_of_xy_pairs_sl.keys():
+            for ml_index, ml_method_label in enumerate(ml_methods):
+                dict_of_xy_pairs_sl[sl].append((list_of_avg_all_ml_true_accuracies[ml_index],list_of_avg_all_ml_accuracies_from_practitioner_sl_world[sl][ml_method_label]))
+        print("B post ", dict_of_xy_pairs_sl)
+        sl_colors = {"hc": 'red', "tabu": 'blue', "rsmax2": 'green', "mmhc": 'yellow',"h2pc": 'orange'}#"notears_linear": "cyan"}
+        for sl in dict_of_xy_pairs_sl.keys():
+            x_true_accuracies, y_sl_accuracies = zip(*dict_of_xy_pairs_sl[sl])
+            plt.scatter(x=x_true_accuracies, y=y_sl_accuracies, c=sl_colors[sl], label=sl, alpha=0.7)
+        plt.title("Scatterplot of x-y pairs between true and benchmarked accuracies for all ml methods")
+        plt.xlabel("Accuracy (True Reference)")
+        plt.ylabel("Accuracy (Estimated Performance)")
+        x_true_accuracies, y_sl_accuracies = zip(*list_of_xy_pairs_all_methods_limited_world)
+        plt.scatter(x=x_true_accuracies, y=y_sl_accuracies, c='black', label='limited-real', marker='x', alpha=1)
+        plt.legend(loc='lower left')
+        plt.style.use("seaborn")
+        plt.tight_layout()
+        plt.savefig(os.getcwd() + figuredirname + 'analysis_3_interworld_benchmarking_scatterplot_accuracies_between_all_methods.png')
+        plt.show()
 
-        #for score_name in TD(analysis2_results, 2).keys():
-        #    data = self.dict_to_list(score_name, analysis2_results)
-        #    worlds = list(analysis2_results.keys())
-        #    df = pd.DataFrame(data, columns=["ML", *worlds])
-        #    methods = df.transpose().iloc[0].values
-        #    grouped_df = df.transpose()
-        #    grouped_df = grouped_df.rename(columns=grouped_df.iloc[0]).drop(grouped_df.index[0])
-        #    grouped_df = grouped_df.reset_index()
-        #    ax = grouped_df.plot(x="index", y=methods, kind="bar", figsize=(11, 11))
-        #    ax.set_ylim(0, 1)
-        #    ax.set_ylabel(score_name)
-        #    plt.title("Inter-world Benchmarking of ML Pipelines Grouped by SL")
-        #    plt.tight_layout()
-        #    plt.savefig('analysis_2_interworld_benchmarking_of_mlpipelines_by_SL.png')
-        #    plt.show()
-        #    ax = df.plot(x="ML", y=worlds, kind="bar", figsize=(11, 11))
-        #    ax.set_ylim(0, 1)
-        #    ax.set_ylabel(score_name)
-        #    plt.title("Inter-world Benchmarking of ML Pipelines Grouped by ML")
-        #    plt.tight_layout()
-        #    plt.savefig('analysis_2_interworld_benchmarking_of_mlpipelines_by_ML.png')
-        #    plt.show()
+    def plot_analysis_coef_gks(self, analysis2_results: dict, pipeline: str = "pipeline1"):
+        markers = ['x', 'o', '^', '*', '+', 's', 'p']
+        c = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
+        corr_df = self.corr_dict_to_pd(analysis2_results)
+        real_corr = corr_df.loc[corr_df['world'] == pipeline].correlation
+        for i, world in enumerate(set(corr_df.world)):
+            if world == "PC":
+                continue
+            world_corr = corr_df.loc[corr_df['world'] == world].correlation
 
-        def plot_analysis_coef_gks(self, analysis2_results: dict, pipeline: str = "pipeline1"):
-            markers = ['x', 'o', '^', '*', '+', 's', 'p']
-            c = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
-            corr_df = self.corr_dict_to_pd(analysis2_results)
-            real_corr = corr_df.loc[corr_df['world'] == pipeline].correlation
-            for i, world in enumerate(set(corr_df.world)):
-                if world == "PC":
-                    continue
-                world_corr = corr_df.loc[corr_df['world'] == world].correlation
+            plt.scatter(real_corr.tolist(), world_corr.tolist(), marker=markers[i], c=c[i], label=world)
 
-                plt.scatter(real_corr.tolist(), world_corr.tolist(), marker=markers[i], c=c[i], label=world)
-
-            plt.title("pair-wise correlations of learned vs real world")
-            plt.xlabel("real world correlations")
-            plt.ylabel("learned world correlations")
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('scatter_plot_of_ccs.png')
-            plt.show()
+        plt.title("pair-wise correlations of learned vs real world")
+        plt.xlabel("real world correlations")
+        plt.ylabel("learned world correlations")
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig('scatter_plot_of_ccs.png')
+        plt.show()
 
     def plot_analysis_violin(self, analysis4_results: dict, score_name='balanced_accuracy_score'):
         fig, ax = plt.subplots(figsize=(20, 20))

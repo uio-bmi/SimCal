@@ -23,14 +23,14 @@ class NotearsLearner(DGModel):
         self.num_vars = len(self.var_names) + 1
         self.outcome_name = data.y.name
         data = data.all.to_numpy()
-        if self.SLClass == "linear":
-            self.model = notears_linear(X=data, lambda1=self.lambda1, loss_type=self.loss_type)
-            self.learned = True
-        elif self.SLClass == "nonlinear":
-            raise NotImplementedError
+        #if self.SLClass == "linear":
+        self.model = notears_linear(X=data, lambda1=self.lambda1, loss_type=self.loss_type)
+        self.learned = True
+        #elif self.SLClass == "nonlinear":
+        #    raise NotImplementedError
             # self.model = notears_nonlinear(X=data)
-        else:
-            raise TypeError(f'Type "{self.kwargs["type"]}" is not defined')
+        #else:
+        #    raise TypeError(f'Type "{self.kwargs["type"]}" is not defined')
 
     def _generate(self, num_samples, outcome_name: str = "Y", sem_type='logistic'):
         data = utils.simulate_linear_sem(W=self.model, n=num_samples, sem_type=sem_type)

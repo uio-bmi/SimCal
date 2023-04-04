@@ -5,24 +5,23 @@ from abc import ABC, abstractmethod
 
 
 class PomegranateLearner(DGModel):
-    def __init__(self, name, algorithm: str = "greedy", **kwargs):
-        super().__init__(name=name, SLClass=BayesianNetwork, **kwargs)
+    def __init__(self, name,SLClass: str, algorithm: str = "greedy", **kwargs):
+        super().__init__(name=name, SLClass=SLClass,**kwargs)
         self.algorithm = algorithm
 
     def instantiate(self):
-        self.model = self.SLClass()
+        pass
 
     def fit(self, data, **kwargs):
         data = data.all
-        self.model = self.model.from_samples(X=data, algorithm=self.algorithm, state_names=data.columns.values)
+        output = BayesianNetwork.from_samples(X=data,algorithm="greedy")
+        self.model = BayesianNetwork.from_samples(X=data)#, algorithm='exact-dp')#, state_names=data.columns.values)
         self.model = self.model.fit(X=data)
 
     def _generate(self, num_samples, outcome_name: str, world: str = "real", dataset: str = "train"):
         data = self.model.sample(n=num_samples)
-        data = Data(name=world + self.name + dataset, X=data.drop(outcome_name, axis=1),
-                    y=data.loc[:, outcome_name])
+        data = Data(name=world + self.name + dataset, X=data.drop(outcome_name, axis=1),y=data.loc[:, outcome_name])
         return data
-
 
 class SomeAbstractClass(ABC):
     @abstractmethod
