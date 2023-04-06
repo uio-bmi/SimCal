@@ -113,16 +113,20 @@ class Evaluator:
         list_of_top_true_ranks = []
         list_of_top_true_accuracies = []
         list_of_avg_all_ml_true_accuracies = []
+        list_of_all_ml_true_accuracies = []
         list_of_top_ranks_from_practitioner_limited_world = []
         list_of_top_accuracies_from_practitioner_limited_world = []
         list_of_avg_all_ml_accuracies_from_practitioner_limited_world = {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}
+        list_of_all_ml_accuracies_from_practitioner_limited_world = []
         list_of_top_ranks_from_practitioner_sl_world = {"hc":[],"tabu":[],"rsmax2":[],"mmhc":[],"h2pc":[]}#"notears_linear":[]}
         list_of_top_accuracies_from_practitioner_sl_world = {"hc": [],"tabu": [], "rsmax2": [], "mmhc": [], "h2pc": []}#"notears_linear":[]}
         list_of_avg_all_ml_accuracies_from_practitioner_sl_world = {"hc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]},"tabu": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "rsmax2": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "mmhc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "h2pc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}}#"notears_linear":[]}
+        list_of_all_ml_accuracies_from_practitioner_sl_world = {"hc": [],"tabu": [], "rsmax2": [], "mmhc": [], "h2pc": []}#"notears_linear":[]}
         list_of_comparable_ranks_in_one_repitition = {} #used to store all ml methods to pick the max-scored option
         for rep in range(0, n_true_repetitions):
             for ml in dg_metrics:
                 list_of_comparable_ranks_in_one_repitition[ml] = dg_metrics[ml]['balanced_accuracy_score'][rep]
+            list_of_all_ml_true_accuracies.append(list_of_comparable_ranks_in_one_repitition.copy())
             list_of_top_true_ranks.append(max(list_of_comparable_ranks_in_one_repitition, key=list_of_comparable_ranks_in_one_repitition.get))
             list_of_top_true_accuracies.append(max(list_of_comparable_ranks_in_one_repitition.values()))
             list_of_comparable_ranks_in_one_repitition.clear()
@@ -135,6 +139,7 @@ class Evaluator:
             for ml in self.ml_models:
                 list_of_comparable_ranks_in_one_repitition[ml.name] = limited_dg_metrics[ml.name]['balanced_accuracy_score']
                 list_of_avg_all_ml_accuracies_from_practitioner_limited_world[ml.name].append(limited_dg_metrics[ml.name]['balanced_accuracy_score'])
+            list_of_all_ml_accuracies_from_practitioner_limited_world.append(list_of_comparable_ranks_in_one_repitition.copy())
             list_of_top_ranks_from_practitioner_limited_world.append(max(list_of_comparable_ranks_in_one_repitition, key=list_of_comparable_ranks_in_one_repitition.get))
             list_of_top_accuracies_from_practitioner_limited_world.append(max(list_of_comparable_ranks_in_one_repitition.values()))
             list_of_comparable_ranks_in_one_repitition.clear()
@@ -156,6 +161,7 @@ class Evaluator:
                     repetition_results[ml.name][score_name] = mean(repetition_results[ml.name][score_name])
                     list_of_comparable_ranks_in_one_repitition[ml.name] = repetition_results[ml.name]['balanced_accuracy_score']
                     list_of_avg_all_ml_accuracies_from_practitioner_sl_world[dg_model.SLClass][ml.name].append(repetition_results[ml.name]['balanced_accuracy_score'])
+                list_of_all_ml_accuracies_from_practitioner_sl_world[dg_model.SLClass].append(list_of_comparable_ranks_in_one_repitition.copy())
                 top_rank_per_sl = max(list_of_comparable_ranks_in_one_repitition, key=list_of_comparable_ranks_in_one_repitition.get)
                 top_accuracies_per_sl = max(list_of_comparable_ranks_in_one_repitition.values())
                 list_of_comparable_ranks_in_one_repitition.clear()
@@ -166,25 +172,33 @@ class Evaluator:
         for dg_model in self.dg_models:
             for ml in self.ml_models:
                 list_of_avg_all_ml_accuracies_from_practitioner_sl_world[dg_model.SLClass][ml.name] = mean(list_of_avg_all_ml_accuracies_from_practitioner_sl_world[dg_model.SLClass][ml.name])
+        print("----- Output of analysis -----")
         print("Infinite scenario ranks: ")
         print(list_of_top_true_ranks)
         print("Infinite scenario accuracies: ")
         print(list_of_top_true_accuracies)
         print("Infinite scenario avg accuracies for all ml methods: ")
         print(list_of_avg_all_ml_true_accuracies)
+        print("Infinite scenario all accuracies for all ml methods: ")
+        print(list_of_all_ml_true_accuracies)
         print("Limited real-world scenario ranks: ")
         print(list_of_top_ranks_from_practitioner_limited_world)
         print("Limited real-world scenario accuracies: ")
         print(list_of_top_accuracies_from_practitioner_limited_world)
         print("Limited real-world avg accuracies for all ml methods: ")
         print(list_of_avg_all_ml_accuracies_from_practitioner_limited_world)
+        print("Limited real-world all accuracies for all ml methods: ")
+        print(list_of_all_ml_accuracies_from_practitioner_limited_world)
         print("SL-supported scenario ranks: ")
         print(list_of_top_ranks_from_practitioner_sl_world)
         print("SL-supported scenario accuracies: ")
         print(list_of_top_accuracies_from_practitioner_sl_world)
         print("SL-supported avg accuracies for all ml methods: ")
         print(list_of_avg_all_ml_accuracies_from_practitioner_sl_world)
-        return [list_of_top_true_ranks, list_of_top_true_accuracies, list_of_avg_all_ml_true_accuracies, list_of_top_ranks_from_practitioner_limited_world, list_of_top_accuracies_from_practitioner_limited_world, list_of_avg_all_ml_accuracies_from_practitioner_limited_world, list_of_top_ranks_from_practitioner_sl_world, list_of_top_accuracies_from_practitioner_sl_world, list_of_avg_all_ml_accuracies_from_practitioner_sl_world]
+        print("SL-supported all accuracies for all ml methods: ")
+        print(list_of_all_ml_accuracies_from_practitioner_sl_world)
+        print("-----")
+        return [list_of_top_true_ranks, list_of_top_true_accuracies, list_of_avg_all_ml_true_accuracies, list_of_all_ml_true_accuracies, list_of_top_ranks_from_practitioner_limited_world, list_of_top_accuracies_from_practitioner_limited_world, list_of_avg_all_ml_accuracies_from_practitioner_limited_world, list_of_all_ml_accuracies_from_practitioner_limited_world, list_of_top_ranks_from_practitioner_sl_world, list_of_top_accuracies_from_practitioner_sl_world, list_of_avg_all_ml_accuracies_from_practitioner_sl_world, list_of_all_ml_accuracies_from_practitioner_sl_world]
 
     def analysis_coef_per_dg_model(self, dg_model_real: DGModel, n_learning: int = 100):
         corr_dict = {}

@@ -95,12 +95,15 @@ class Postprocessing():
         list_of_top_true_ranks = analysis3_results[0]
         list_of_top_true_accuracies = analysis3_results[1]
         list_of_avg_all_ml_true_accuracies = analysis3_results[2]
-        list_of_top_ranks_from_practitioner_limited_world = analysis3_results[3]
-        list_of_top_accuracies_from_practitioner_limited_world = analysis3_results[4]
-        list_of_avg_all_ml_accuracies_from_practitioner_limited_world = analysis3_results[5]
-        list_of_top_ranks_from_practitioner_sl_world = analysis3_results[6]
-        list_of_top_accuracies_from_practitioner_sl_world = analysis3_results[7]
-        list_of_avg_all_ml_accuracies_from_practitioner_sl_world = analysis3_results[8]
+        list_of_all_ml_true_accuracies = analysis3_results[3]
+        list_of_top_ranks_from_practitioner_limited_world = analysis3_results[4]
+        list_of_top_accuracies_from_practitioner_limited_world = analysis3_results[5]
+        list_of_avg_all_ml_accuracies_from_practitioner_limited_world = analysis3_results[6]
+        list_of_all_ml_accuracies_from_practitioner_limited_world = analysis3_results[7]
+        list_of_top_ranks_from_practitioner_sl_world = analysis3_results[8]
+        list_of_top_accuracies_from_practitioner_sl_world = analysis3_results[9]
+        list_of_avg_all_ml_accuracies_from_practitioner_sl_world = analysis3_results[10]
+        list_of_all_ml_accuracies_from_practitioner_sl_world = analysis3_results[11]
 
         # Create scatterplot of proportional performances for the top ml methods from alternative pathways
         list_of_xy_pairs_limited_world = []
@@ -114,7 +117,7 @@ class Postprocessing():
         for sl in dict_of_xy_pairs_sl.keys():
             x_true_accuracies, y_sl_accuracies = zip(*dict_of_xy_pairs_sl[sl])
             plt.scatter(x=x_true_accuracies, y=y_sl_accuracies, c=sl_colors[sl], label=sl, alpha=0.7)
-        plt.title("Scatterplot of x-y pairs between true top and benchmarked top accuracies")
+        plt.title("Scatterplot of x-y pairs between true top and max benchmarked top accuracies")
         plt.xlabel("Accuracy (True Reference)")
         plt.ylabel("Accuracy (Estimated Performance)")
         x_true_accuracies, y_sl_accuracies = zip(*list_of_xy_pairs_limited_world)
@@ -122,7 +125,7 @@ class Postprocessing():
         plt.legend(loc='lower left')
         plt.style.use("seaborn")
         plt.tight_layout()
-        plt.savefig(os.getcwd() + figuredirname + 'analysis_3_interworld_benchmarking_scatterplot_accuracies_between_max_method.png')
+        plt.savefig(os.getcwd() + figuredirname + 'analysis_3_interworld_benchmarking_scatterplot_accuracies_max_method.png')
         plt.show()
 
         # Create proportion of matches bar graph
@@ -146,7 +149,7 @@ class Postprocessing():
         plt.title("Proportion of matched top ML methods to the true top benchmarks")
         plt.style.use("seaborn")
         plt.tight_layout()
-        plt.savefig(os.getcwd()+figuredirname+'analysis_3_interworld_benchmarking_barplot_proportion_matches_between_max_method.png')
+        plt.savefig(os.getcwd()+figuredirname+'analysis_3_interworld_benchmarking_barplot_proportion_matches_max_method.png')
         plt.show()
 
         # Create scatterplot of proportional performances for all ml methods between alternative pathways
@@ -158,12 +161,11 @@ class Postprocessing():
         for sl in dict_of_xy_pairs_sl.keys():
             for ml_index, ml_method_label in enumerate(ml_methods):
                 dict_of_xy_pairs_sl[sl].append((list_of_avg_all_ml_true_accuracies[ml_index],list_of_avg_all_ml_accuracies_from_practitioner_sl_world[sl][ml_method_label]))
-        print("B post ", dict_of_xy_pairs_sl)
         sl_colors = {"hc": 'red', "tabu": 'blue', "rsmax2": 'green', "mmhc": 'yellow',"h2pc": 'orange'}#"notears_linear": "cyan"}
         for sl in dict_of_xy_pairs_sl.keys():
             x_true_accuracies, y_sl_accuracies = zip(*dict_of_xy_pairs_sl[sl])
             plt.scatter(x=x_true_accuracies, y=y_sl_accuracies, c=sl_colors[sl], label=sl, alpha=0.7)
-        plt.title("Scatterplot of x-y pairs between true and benchmarked accuracies for all ml methods")
+        plt.title("Scatterplot of x-y pairs between true and benchmarked avg accuracies for all ml methods")
         plt.xlabel("Accuracy (True Reference)")
         plt.ylabel("Accuracy (Estimated Performance)")
         x_true_accuracies, y_sl_accuracies = zip(*list_of_xy_pairs_all_methods_limited_world)
@@ -171,8 +173,34 @@ class Postprocessing():
         plt.legend(loc='lower left')
         plt.style.use("seaborn")
         plt.tight_layout()
-        plt.savefig(os.getcwd() + figuredirname + 'analysis_3_interworld_benchmarking_scatterplot_accuracies_between_all_methods.png')
+        plt.savefig(os.getcwd() + figuredirname + 'analysis_3_interworld_benchmarking_scatterplot_accuracies_all_methods_mean_across_repetition.png')
         plt.show()
+
+        # Create scatterplot of x-y pairs for pathways per repetition for all ml methods
+        sl_colors = {"hc": 'red', "tabu": 'blue', "rsmax2": 'green', "mmhc": 'yellow',"h2pc": 'orange'}  # "notears_linear": "cyan"}
+        for true_repitition in range(0, len(list_of_all_ml_true_accuracies)):
+            fig = plt.figure(figsize=(10, 10))
+            list_of_xy_pairs_all_methods_limited_world = []
+            dict_of_xy_pairs_sl = {"hc": [], "tabu": [], "rsmax2": [], "mmhc": [], "h2pc": []}  # "notears_linear": []}
+            ml_methods = ["DecisionTreeClassifier", "RandomForestClassifier", "KNeighborsClassifier","GradientBoostingClassifier", "SVCRbf", "SVCLinear", "SVCSigmoid", "LogisticLASSO","MLPClassifier"]
+            for ml_index, ml_method_label in enumerate(ml_methods):
+                list_of_xy_pairs_all_methods_limited_world.append((list_of_all_ml_true_accuracies[true_repitition][ml_method_label],list_of_all_ml_accuracies_from_practitioner_limited_world[true_repitition][ml_method_label]))
+            for sl in dict_of_xy_pairs_sl.keys():
+                for ml_index, ml_method_label in enumerate(ml_methods):
+                    dict_of_xy_pairs_sl[sl].append((list_of_all_ml_true_accuracies[true_repitition][ml_method_label],list_of_all_ml_accuracies_from_practitioner_sl_world[sl][true_repitition][ml_method_label]))
+            for sl in dict_of_xy_pairs_sl.keys():
+                x_true_accuracies, y_sl_accuracies = zip(*dict_of_xy_pairs_sl[sl])
+                plt.scatter(x=x_true_accuracies, y=y_sl_accuracies, c=sl_colors[sl], label=sl, alpha=0.7)
+            plt.title("Scatterplot of x-y pairs between true and benchmarked accuracies for all ml methods (repetition: "+str(true_repitition)+")")
+            plt.xlabel("Accuracy (True Reference)")
+            plt.ylabel("Accuracy (Estimated Performance)")
+            x_true_accuracies, y_sl_accuracies = zip(*list_of_xy_pairs_all_methods_limited_world)
+            plt.scatter(x=x_true_accuracies, y=y_sl_accuracies, c='black', label='limited-real', marker='x', alpha=1)
+            plt.legend(loc='lower left')
+            plt.style.use("seaborn")
+            plt.tight_layout()
+            plt.savefig(os.getcwd() + figuredirname + 'analysis_3_interworld_benchmarking_scatterplot_accuracies_all_methods_repetition'+str(true_repitition)+'.png')
+            plt.show()
 
     def plot_analysis_coef_gks(self, analysis2_results: dict, pipeline: str = "pipeline1"):
         markers = ['x', 'o', '^', '*', '+', 's', 'p']
