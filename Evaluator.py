@@ -118,10 +118,10 @@ class Evaluator:
         list_of_top_accuracies_from_practitioner_limited_world = []
         list_of_avg_all_ml_accuracies_from_practitioner_limited_world = {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}
         list_of_all_ml_accuracies_from_practitioner_limited_world = []
-        list_of_top_ranks_from_practitioner_sl_world = {"hc":[],"tabu":[],"rsmax2":[],"mmhc":[],"h2pc":[]}#"notears_linear":[]}
-        list_of_top_accuracies_from_practitioner_sl_world = {"hc": [],"tabu": [], "rsmax2": [], "mmhc": [], "h2pc": []}#"notears_linear":[]}
-        list_of_avg_all_ml_accuracies_from_practitioner_sl_world = {"hc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]},"tabu": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "rsmax2": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "mmhc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "h2pc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}}#"notears_linear":[]}
-        list_of_all_ml_accuracies_from_practitioner_sl_world = {"hc": [],"tabu": [], "rsmax2": [], "mmhc": [], "h2pc": []}#"notears_linear":[]}
+        list_of_top_ranks_from_practitioner_sl_world = {"hc":[], "tabu":[],"rsmax2":[],"mmhc":[],"h2pc":[],"gs":[], "notears_linear":[]}#,"iamb":[],"fast.iamb":[],"iamb.fdr":[]}
+        list_of_top_accuracies_from_practitioner_sl_world = {"hc": [],"tabu": [], "rsmax2": [], "mmhc": [], "h2pc": [],"gs":[], "notears_linear":[]}#,"iamb":[],"fast.iamb":[],"iamb.fdr":[]}
+        list_of_avg_all_ml_accuracies_from_practitioner_sl_world = {"hc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]},"tabu": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "rsmax2": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "mmhc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "h2pc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "gs": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "notears_linear": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}}#"iamb": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "fast.iamb": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "iamb.fdr": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}}
+        list_of_all_ml_accuracies_from_practitioner_sl_world = {"hc": [],"tabu": [], "rsmax2": [], "mmhc": [], "h2pc": [],"gs":[], "notears_linear":[]}#,"iamb":[],"fast.iamb":[],"iamb.fdr":[]}
         list_of_comparable_ranks_in_one_repitition = {} #used to store all ml methods to pick the max-scored option
         for rep in range(0, n_true_repetitions):
             for ml in dg_metrics:
@@ -149,9 +149,9 @@ class Evaluator:
                     data=[[[] for _ in range(len(self.ml_models))] for __ in range(len(self.scores))],
                     index=[sc.__name__ for sc in self.scores], columns=[md.name for md in self.ml_models])
                 for sl_rep in range(0, n_sl_repititions):
-                    if dg_model.SLClass == "hc" or dg_model.SLClass =="tabu" or dg_model.SLClass =="rsmax2" or dg_model.SLClass == "mmhc" or dg_model.SLClass =="h2pc":
+                    if dg_model.SLClass == "hc" or dg_model.SLClass =="tabu" or dg_model.SLClass =="rsmax2" or dg_model.SLClass == "mmhc" or dg_model.SLClass =="h2pc" or dg_model.SLClass =="gs" or dg_model.SLClass =="iamb" or dg_model.SLClass =="fast.iamb" or dg_model.SLClass =="iamb.fdr":
                         sl_dg_metrics, sl_train_data, sl_test_data = self._evaluate_bnlearn_dg_model(dg_model=dg_model,learning_data_real=train_data,n_learning=n_learning, n_train=n_train,n_test=n_test, SLClass=dg_model.SLClass)
-                    elif dg_model.SLClass == "notears_linear" or dg_model.SLClass == "greedy" or dg_model.SLClass == "exact":
+                    elif dg_model.SLClass == "notears_linear":
                         dg_model.fit(train_data)
                         sl_dg_metrics, sl_train_data, sl_test_data = self._evaluate_dg_model(dg_model=dg_model,n_learning=n_learning,n_train=n_train,n_test=n_test)
                     for score_name in repetition_results.index.values.tolist():
@@ -197,7 +197,7 @@ class Evaluator:
         print(list_of_avg_all_ml_accuracies_from_practitioner_sl_world)
         print("SL-supported all accuracies for all ml methods: ")
         print(list_of_all_ml_accuracies_from_practitioner_sl_world)
-        print("-----")
+        print("----- End of Analysis Output -----")
         return [list_of_top_true_ranks, list_of_top_true_accuracies, list_of_avg_all_ml_true_accuracies, list_of_all_ml_true_accuracies, list_of_top_ranks_from_practitioner_limited_world, list_of_top_accuracies_from_practitioner_limited_world, list_of_avg_all_ml_accuracies_from_practitioner_limited_world, list_of_all_ml_accuracies_from_practitioner_limited_world, list_of_top_ranks_from_practitioner_sl_world, list_of_top_accuracies_from_practitioner_sl_world, list_of_avg_all_ml_accuracies_from_practitioner_sl_world, list_of_all_ml_accuracies_from_practitioner_sl_world]
 
     def analysis_coef_per_dg_model(self, dg_model_real: DGModel, n_learning: int = 100):
@@ -363,9 +363,182 @@ class Evaluator:
                         list_output <- list(training_output, testing_output)
                         }
                         ''')
+        elif SLClass == "gs":
+            robjects.r('''
+                        library(bnlearn)
+                        library(plyr)
+                        bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
+                        learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
+                        my_bn <- cextend(gs(learning_data_real), strict=FALSE)
+                        fit = bn.fit(my_bn, learning_data_real)
+                        training_output = rbn(my_bn, n_train, learning_data_real)
+                        testing_output = rbn(my_bn, n_test, learning_data_real)
+                        training_output[is.na(training_output)] <- 0
+                        testing_output[is.na(testing_output)] <- 0
+                        list_output <- list(training_output, testing_output)
+                        }
+                        ''')
+        elif SLClass == "iamb":
+            robjects.r('''
+                        library(bnlearn)
+                        library(plyr)
+                        bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
+                        learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
+                        my_bn <- cextend(iamb(learning_data_real), strict=FALSE)
+                        fit = bn.fit(my_bn, learning_data_real)
+                        training_output = rbn(my_bn, n_train, learning_data_real)
+                        testing_output = rbn(my_bn, n_test, learning_data_real)
+                        training_output[is.na(training_output)] <- 0
+                        testing_output[is.na(testing_output)] <- 0
+                        list_output <- list(training_output, testing_output)
+                        }
+                        ''')
+        elif SLClass == "fast.iamb":
+            robjects.r('''
+                        library(bnlearn)
+                        library(plyr)
+                        bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
+                        learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
+                        my_bn <- cextend(fast.iamb(learning_data_real), strict=FALSE)
+                        fit = bn.fit(my_bn, learning_data_real)
+                        training_output = rbn(my_bn, n_train, learning_data_real)
+                        testing_output = rbn(my_bn, n_test, learning_data_real)
+                        training_output[is.na(training_output)] <- 0
+                        testing_output[is.na(testing_output)] <- 0
+                        list_output <- list(training_output, testing_output)
+                        }
+                        ''')
+        elif SLClass == "iamb.fdr":
+            robjects.r('''
+                        library(bnlearn)
+                        library(plyr)
+                        bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
+                        learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
+                        my_bn <- cextend(iamb.fdr(learning_data_real), strict=FALSE)
+                        fit = bn.fit(my_bn, learning_data_real)
+                        training_output = rbn(my_bn, n_train, learning_data_real)
+                        testing_output = rbn(my_bn, n_test, learning_data_real)
+                        training_output[is.na(training_output)] <- 0
+                        testing_output[is.na(testing_output)] <- 0
+                        list_output <- list(training_output, testing_output)
+                        }
+                        ''')
 
         bn_hc = robjects.r['bn_learn']
         bn_train_output = bn_hc(learning_data_real, n_train, n_test)
+
+        train_data = np.array(bn_train_output[0])
+        test_data = np.array(bn_train_output[1])
+        X = pd.DataFrame(train_data[:, :-1])
+        y = pd.Series(train_data[:, -1], name="Y")
+        train_data = Data(name="train", X=X, y=y)
+        X = pd.DataFrame(test_data[:, :-1])
+        y = pd.Series(test_data[:, -1], name="Y")
+        test_data = Data(name="test", X=X, y=y)
+
+        metrics = self._develop_all_ml_models(train_data, test_data)
+        metrics = {f'{dg_model.name}': metrics}
+        learning_data = train_data[0:n_learning:1] if n_learning > 0 else None
+        return metrics, learning_data, test_data
+
+    def _evaluate_bnstruct_dg_model(self, dg_model: DGModel, learning_data_real, n_learning: int, n_train: int, n_test: int,SLClass: str):
+        learning_data_real = learning_data_real.all
+
+        #learning_data_real.loc[0,"AppDtGnTm"] = 1
+        #learning_data_real.loc[0, "PrtThread"] = 1
+        #learning_data_real.loc[0, "TnrSpply"] = 1
+        #learning_data_real.loc[0, "AvlblVrtlMmry"] = 1
+        #learning_data_real.loc[0, "AppData"] = 1
+        #learning_data_real.loc[0, "AppOK"] = 1
+        #learning_data_real.loc[0, "CblPrtHrdwrOK"] = 1
+        #print(count(learning_data_real$PrtThread))
+        #print(table(is.na(training_output)))
+        #print(sapply(learning_data_real, levels))
+
+        if SLClass == "sem":
+            robjects.r('''
+                        library(bnlearn)
+                        library(plyr)
+                        bn_struct <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
+                        learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
+                        my_bn <- cextend(iamb.fdr(learning_data_real, undirected=FALSE), strict=FALSE)
+                        fit = bn.fit(my_bn, learning_data_real)
+                        training_output = rbn(my_bn, n_train, learning_data_real)
+                        testing_output = rbn(my_bn, n_test, learning_data_real)
+                        training_output[is.na(training_output)] <- 0
+                        testing_output[is.na(testing_output)] <- 0
+                        list_output <- list(training_output, testing_output)
+                        }
+                        ''')
+        elif SLClass == "second":
+            robjects.r('''
+                        install.packages("tetrad")
+                        library(tetrad)
+                        bn_struct <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
+                        my_bn <- pc(learning_data_real, indepTest=binCItest, labels=colnames(learning_data_real))
+                        print(my_bn)
+                        training_output = simulateSEM(my_bn, n=n_train)
+                        testing_output = simulateSEM(my_bn, n=n_test)
+                        print(training_output)
+                        print(testing_output)
+                        training_output[is.na(training_output)] <- 0
+                        testing_output[is.na(testing_output)] <- 0
+                        list_output <- list(training_output, testing_output)
+                        }
+                        ''')
+        elif SLClass == "third":
+            robjects.r('''
+                        install.packages("bnstruct")
+                        library(bnstruct)
+                        bn_struct <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
+                        my_bn <- learn.network(x=BNDataset(learning_data_real, discreteness=rep(TRUE, ncol(learning_data_real)), variables=colnames(learning_data_real), algo="sem", scoring.func="AIC"))
+                        print(my_bn)
+                        training_output = sample_from_dag(my_bn, n_train)
+                        testing_output = sample_from_dag(my_bn, n_test)
+                        print(training_output)
+                        print(testing_output)
+                        training_output[is.na(training_output)] <- 0
+                        testing_output[is.na(testing_output)] <- 0
+                        list_output <- list(training_output, testing_output)
+                        }
+                        ''')
+        elif SLClass == "fourth":
+            robjects.r('''
+                        install.packages("BDgraph")
+                        library(BDgraph)
+                        bn_struct <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
+                        fit <- bdgraph(learning_data_real, algorithm = "rjmcmc")
+                        training_output = bdgraph.sim(fit, n = n_train)
+                        testing_output = bdgraph.sim(fit, n = n_test)
+                        print(training_output)
+                        print(testing_output)
+                        training_output[is.na(training_output)] <- 0
+                        testing_output[is.na(testing_output)] <- 0
+                        list_output <- list(training_output, testing_output)
+                        }
+                        ''')
+        elif SLClass == "Fifth":
+            robjects.r('''
+                        install.packages("bnlearn")
+                        install.packages("pcalg")
+                        library(pcalg)
+                        library(bnlearn)
+                        bn_struct <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
+                        suffstat <- list(C = cor(learning_data_real), n = nrow(learning_data_real)) 
+                        pcalg <- pc(suffstat, indepTest=gaussCItest, p=ncol(learning_data_real), labels=colnames(learning_data_real), alpha=0.05)
+                        dag <- pcalg2dag(pcalg$graph)
+                        training_output = rbn(dag, n = n_train)
+                        testing_output = rbn(dag, n = n_test)
+                        print(training_output)
+                        print(testing_output)
+                        training_output[is.na(training_output)] <- 0
+                        testing_output[is.na(testing_output)] <- 0
+                        list_output <- list(training_output, testing_output)
+                        }
+                        ''')
+
+        bn_sem = robjects.r['bn_struct']
+        bn_train_output = bn_sem(learning_data_real, n_train, n_test)
 
         train_data = np.array(bn_train_output[0])
         test_data = np.array(bn_train_output[1])

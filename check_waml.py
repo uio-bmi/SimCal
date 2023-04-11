@@ -29,7 +29,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 #list_pgmpy = [PgmpyModel(f'{learner.__name__}', learner, "Y") for learner in [PC, HillClimbSearch, TreeSearch, MmhcEstimator, ExhaustiveSearch]]
 #no_tears_linear_default = [NotearsLearner(name="notears_linear", SLClass="notears_linear", loss_type='logistic', lambda1=0.01)]
 #PomegranateLearner(name="greedy", SLClass="exact", algorithm="exact")]#PomegranateLearner(name="greedy", SLClass="greedy")]
-structural_learner_list = [Bnlearner(name="hc", SLClass="hc"), Bnlearner(name="tabu", SLClass="tabu"), Bnlearner(name="rsmax2", SLClass="rsmax2"), Bnlearner(name="mmhc", SLClass="mmhc"), Bnlearner(name="h2pc", SLClass="h2pc")]#NotearsLearner(name="notears_linear", SLClass="notears_linear", loss_type='logistic', lambda1=0.01)]
+structural_learner_list = [Bnlearner(name="hc", SLClass="hc"), Bnlearner(name="tabu", SLClass="tabu"), Bnlearner(name="rsmax2", SLClass="rsmax2"), Bnlearner(name="mmhc", SLClass="mmhc"), Bnlearner(name="h2pc", SLClass="h2pc"), Bnlearner(name="gs", SLClass="gs"), NotearsLearner(name="notears_linear", SLClass="notears_linear", loss_type='logistic', lambda1=0.01)]#, Bnlearner(name="iamb", SLClass="iamb"), Bnlearner(name="fast.iamb", SLClass="fast.iamb"),Bnlearner(name="iamb.fdr", SLClass="iamb.fdr")]
 
 list_sklearn = [SklearnModel(f'{learner.__name__}', learner) for learner in
                 [DecisionTreeClassifier, RandomForestClassifier, KNeighborsClassifier, GradientBoostingClassifier]] #Additional NB classifiers GaussianNB, BernoulliNB, MultinomialNB, ComplementNB, CategoricalNB,

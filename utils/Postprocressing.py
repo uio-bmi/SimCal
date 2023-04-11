@@ -107,13 +107,13 @@ class Postprocessing():
 
         # Create scatterplot of proportional performances for the top ml methods from alternative pathways
         list_of_xy_pairs_limited_world = []
-        dict_of_xy_pairs_sl = {"hc": [], "tabu": [], "rsmax2": [], "mmhc": [], "h2pc": []}#"notears_linear": []}
+        dict_of_xy_pairs_sl = {"hc": [], "tabu": [], "rsmax2": [], "mmhc": [], "h2pc": [],"gs":[], "notears_linear":[]}#,"iamb":[],"fast.iamb":[],"iamb.fdr":[]}
         for true_repitition in range(0, len(list_of_top_true_accuracies)):
             list_of_xy_pairs_limited_world.append( (list_of_top_true_accuracies[true_repitition], list_of_top_accuracies_from_practitioner_limited_world[true_repitition]) )
         for sl in dict_of_xy_pairs_sl.keys():
             for true_repitition in range(0, len(list_of_top_true_ranks)):
                 dict_of_xy_pairs_sl[sl].append( (list_of_top_true_accuracies[true_repitition], list_of_top_accuracies_from_practitioner_sl_world[sl][true_repitition]) )
-        sl_colors = {"hc": 'red', "tabu": 'blue', "rsmax2": 'green', "mmhc": 'yellow', "h2pc": 'orange'}#,"notears_linear": "cyan"}
+        sl_colors = {"hc": 'red', "tabu": 'blue', "rsmax2": 'green', "mmhc": 'yellow', "h2pc": 'orange', "gs": "cyan","notears_linear":"brown"}#, "iamb": "magenta", "fast.iamb": "peru", "iamb.fdr": "pink"}
         for sl in dict_of_xy_pairs_sl.keys():
             x_true_accuracies, y_sl_accuracies = zip(*dict_of_xy_pairs_sl[sl])
             plt.scatter(x=x_true_accuracies, y=y_sl_accuracies, c=sl_colors[sl], label=sl, alpha=0.7)
@@ -129,14 +129,14 @@ class Postprocessing():
         plt.show()
 
         # Create proportion of matches bar graph
-        data = {"hc":0, "tabu":0,"rsmax2":0,"mmhc":0,"h2pc":0}#"notears_linear": 0}
-        for rank_at_repitition in range(0, len(list_of_top_true_ranks)):
-            if list_of_top_ranks_from_practitioner_limited_world[rank_at_repitition] == list_of_top_true_ranks[rank_at_repitition]:
+        data = {"hc":0, "tabu":0,"rsmax2":0,"mmhc":0,"h2pc":0,"gs":0,"notears_linear":0}#,"iamb":0,"fast.iamb":0,"iamb.fdr":0}
+        for rank_at_repetition in range(0, len(list_of_top_true_ranks)):
+            if list_of_top_ranks_from_practitioner_limited_world[rank_at_repetition] == list_of_top_true_ranks[rank_at_repetition]:
                 matches_from_practitioner_limited_world += 1
         for sl in data.keys():
             sl_match_count = 0
-            for rank_at_repitition in range(0, len(list_of_top_true_ranks)):
-                if list_of_top_ranks_from_practitioner_sl_world[sl][rank_at_repitition] == list_of_top_true_ranks[rank_at_repitition]:
+            for rank_at_repetition in range(0, len(list_of_top_true_ranks)):
+                if list_of_top_ranks_from_practitioner_sl_world[sl][rank_at_repetition] == list_of_top_true_ranks[rank_at_repetition]:
                     sl_match_count += 1
             data[sl] = sl_match_count/len(list_of_top_true_ranks)
         data["limited-real"] = matches_from_practitioner_limited_world/len(list_of_top_true_ranks)
@@ -154,14 +154,14 @@ class Postprocessing():
 
         # Create scatterplot of proportional performances for all ml methods between alternative pathways
         list_of_xy_pairs_all_methods_limited_world = []
-        dict_of_xy_pairs_sl = {"hc": [], "tabu": [], "rsmax2": [], "mmhc": [], "h2pc": []}#"notears_linear": []}
+        dict_of_xy_pairs_sl = {"hc": [], "tabu": [], "rsmax2": [], "mmhc": [], "h2pc": [],"gs":[], "notears_linear":[]}#,"iamb":[],"fast.iamb":[],"iamb.fdr":[]}
         ml_methods = ["DecisionTreeClassifier","RandomForestClassifier","KNeighborsClassifier","GradientBoostingClassifier", "SVCRbf","SVCLinear", "SVCSigmoid","LogisticLASSO", "MLPClassifier"]
         for ml_index, ml_method_label in enumerate(ml_methods):
             list_of_xy_pairs_all_methods_limited_world.append((list_of_avg_all_ml_true_accuracies[ml_index],list_of_avg_all_ml_accuracies_from_practitioner_limited_world[ml_method_label]))
         for sl in dict_of_xy_pairs_sl.keys():
             for ml_index, ml_method_label in enumerate(ml_methods):
                 dict_of_xy_pairs_sl[sl].append((list_of_avg_all_ml_true_accuracies[ml_index],list_of_avg_all_ml_accuracies_from_practitioner_sl_world[sl][ml_method_label]))
-        sl_colors = {"hc": 'red', "tabu": 'blue', "rsmax2": 'green', "mmhc": 'yellow',"h2pc": 'orange'}#"notears_linear": "cyan"}
+        sl_colors = {"hc": 'red',"tabu": 'blue', "rsmax2": 'green', "mmhc": 'yellow',"h2pc": 'orange', "gs": "cyan", "notears_linear": "brown"}#, "iamb": "magenta", "fast.iamb": "peru", "iamb.fdr": "pink"}
         for sl in dict_of_xy_pairs_sl.keys():
             x_true_accuracies, y_sl_accuracies = zip(*dict_of_xy_pairs_sl[sl])
             plt.scatter(x=x_true_accuracies, y=y_sl_accuracies, c=sl_colors[sl], label=sl, alpha=0.7)
@@ -177,11 +177,11 @@ class Postprocessing():
         plt.show()
 
         # Create scatterplot of x-y pairs for pathways per repetition for all ml methods
-        sl_colors = {"hc": 'red', "tabu": 'blue', "rsmax2": 'green', "mmhc": 'yellow',"h2pc": 'orange'}  # "notears_linear": "cyan"}
+        sl_colors = {"hc": 'red', "tabu": 'blue', "rsmax2": 'green', "mmhc": 'yellow',"h2pc": 'orange', "gs": "cyan","notears_linear": "brown"}# "iamb": "magenta", "fast.iamb": "peru", "iamb.fdr": "pink"}
         for true_repitition in range(0, len(list_of_all_ml_true_accuracies)):
             fig = plt.figure(figsize=(10, 10))
             list_of_xy_pairs_all_methods_limited_world = []
-            dict_of_xy_pairs_sl = {"hc": [], "tabu": [], "rsmax2": [], "mmhc": [], "h2pc": []}  # "notears_linear": []}
+            dict_of_xy_pairs_sl = {"hc": [], "tabu": [], "rsmax2": [], "mmhc": [], "h2pc": [],"gs":[],"notears_linear":[]}#"iamb":[],"fast.iamb":[],"iamb.fdr":[]}
             ml_methods = ["DecisionTreeClassifier", "RandomForestClassifier", "KNeighborsClassifier","GradientBoostingClassifier", "SVCRbf", "SVCLinear", "SVCSigmoid", "LogisticLASSO","MLPClassifier"]
             for ml_index, ml_method_label in enumerate(ml_methods):
                 list_of_xy_pairs_all_methods_limited_world.append((list_of_all_ml_true_accuracies[true_repitition][ml_method_label],list_of_all_ml_accuracies_from_practitioner_limited_world[true_repitition][ml_method_label]))
