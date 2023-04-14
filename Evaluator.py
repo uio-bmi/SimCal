@@ -81,16 +81,6 @@ class Evaluator:
                 result_per_btsrtp_per_model = self._develop_ml_model(ml_model, btstr_tr, test_data)
                 for score_name in btstrp_results.index.values.tolist():
                     btstrp_results[ml_model.name][score_name].append(result_per_btsrtp_per_model[score_name])
-
-        #difference_to_average_by_ml = {}
-        #for ml_model in self.ml_models:
-        #    average_performance = np.mean(btstrp_results[ml_model.name][score_name])
-        #    list_of_difference_to_average = []
-        #    for num_btr in range(n_btstrps):
-        #        difference_to_average = abs(btstrp_results[ml_model.name][score_name][num_btr] - average_performance)
-        #        list_of_difference_to_average.append(difference_to_average)
-        #    difference_to_average_by_ml[ml_model.name] = list_of_difference_to_average
-        #pd.DataFrame(difference_to_average_by_ml).to_csv("analysis_1_benchmarking_limited_relevancy.csv")
         return btstrp_results
 
     def analysis_2_per_dg_model(self, dg_model_real: DGModel, n_learning: int, n_train: int,n_test: int, n_repetitions):
@@ -109,96 +99,40 @@ class Evaluator:
         return list_of_results
 
     def analysis_3_per_dg_model(self, dg_model_real: DGModel, n_learning: int, n_train: int,n_test: int, n_true_repetitions: int, n_learning_repititions: int, n_sl_repititions: int):
-        dg_metrics, train_data, test_data = self._get_performance_by_repetition(dg_model_real, n_train+n_test,0.5, n_true_repetitions)
-        list_of_top_true_ranks = []
-        list_of_top_true_accuracies = []
-        list_of_avg_all_ml_true_accuracies = []
-        list_of_all_ml_true_accuracies = []
-        list_of_top_ranks_from_practitioner_limited_world = []
-        list_of_top_accuracies_from_practitioner_limited_world = []
-        list_of_avg_all_ml_accuracies_from_practitioner_limited_world = {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}
-        list_of_all_ml_accuracies_from_practitioner_limited_world = []
-        list_of_top_ranks_from_practitioner_sl_world = {"hc":[], "tabu":[],"rsmax2":[],"mmhc":[],"h2pc":[],"gs":[], "notears_linear":[]}#,"iamb":[],"fast.iamb":[],"iamb.fdr":[]}
-        list_of_top_accuracies_from_practitioner_sl_world = {"hc": [],"tabu": [], "rsmax2": [], "mmhc": [], "h2pc": [],"gs":[], "notears_linear":[]}#,"iamb":[],"fast.iamb":[],"iamb.fdr":[]}
-        list_of_avg_all_ml_accuracies_from_practitioner_sl_world = {"hc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]},"tabu": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "rsmax2": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "mmhc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "h2pc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "gs": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "notears_linear": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}}#"iamb": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "fast.iamb": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "iamb.fdr": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}}
-        list_of_all_ml_accuracies_from_practitioner_sl_world = {"hc": [],"tabu": [], "rsmax2": [], "mmhc": [], "h2pc": [],"gs":[], "notears_linear":[]}#,"iamb":[],"fast.iamb":[],"iamb.fdr":[]}
-        list_of_comparable_ranks_in_one_repitition = {} #used to store all ml methods to pick the max-scored option
-        for rep in range(0, n_true_repetitions):
-            for ml in dg_metrics:
-                list_of_comparable_ranks_in_one_repitition[ml] = dg_metrics[ml]['balanced_accuracy_score'][rep]
-            list_of_all_ml_true_accuracies.append(list_of_comparable_ranks_in_one_repitition.copy())
-            list_of_top_true_ranks.append(max(list_of_comparable_ranks_in_one_repitition, key=list_of_comparable_ranks_in_one_repitition.get))
-            list_of_top_true_accuracies.append(max(list_of_comparable_ranks_in_one_repitition.values()))
-            list_of_comparable_ranks_in_one_repitition.clear()
-        for ml in dg_metrics:
-            list_of_avg_all_ml_true_accuracies.append(mean(dg_metrics[ml]['balanced_accuracy_score']))
+        list_of_learning_length_all_ml_avg_ntrue_accuracies = {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}
+        list_of_learning_length_all_ml_avg_nlearning_accuracies = []
+        list_of_learning_length_all_ml_avg_nsl_accuracies = {"hc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]},"tabu": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "rsmax2": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "mmhc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "h2pc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "gs": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "pc.stable": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}}
         for learning_rep in range(0, n_learning_repititions):
-            print("learning rep: ",learning_rep)
-            train_data, test_data = self._get_train_and_test_from_dg(dg_model_real, n_train+n_test, 0.5)
+            dg_metrics, train_data, test_data = self._get_performance_by_repetition(dg_model_real, n_train + n_test,0.5, n_true_repetitions)
+            for ml in dg_metrics:
+                list_of_learning_length_all_ml_avg_ntrue_accuracies[ml].append(mean(dg_metrics[ml]['balanced_accuracy_score']))
+        for learning_rep in range(0, n_learning_repititions):
+            print("learning rep: ", learning_rep)
+            train_data, test_data = self._get_train_and_test_from_dg(dg_model_real, n_train + n_test, 0.5)
             limited_dg_metrics = self._develop_all_ml_models(train_data, test_data)
-            for ml in self.ml_models:
-                list_of_comparable_ranks_in_one_repitition[ml.name] = limited_dg_metrics[ml.name]['balanced_accuracy_score']
-                list_of_avg_all_ml_accuracies_from_practitioner_limited_world[ml.name].append(limited_dg_metrics[ml.name]['balanced_accuracy_score'])
-            list_of_all_ml_accuracies_from_practitioner_limited_world.append(list_of_comparable_ranks_in_one_repitition.copy())
-            list_of_top_ranks_from_practitioner_limited_world.append(max(list_of_comparable_ranks_in_one_repitition, key=list_of_comparable_ranks_in_one_repitition.get))
-            list_of_top_accuracies_from_practitioner_limited_world.append(max(list_of_comparable_ranks_in_one_repitition.values()))
-            list_of_comparable_ranks_in_one_repitition.clear()
+            list_of_learning_length_all_ml_avg_nlearning_accuracies.append(limited_dg_metrics)
             for dg_model in self.dg_models:
                 print(dg_model.SLClass)
                 repetition_results = pd.DataFrame(
                     data=[[[] for _ in range(len(self.ml_models))] for __ in range(len(self.scores))],
                     index=[sc.__name__ for sc in self.scores], columns=[md.name for md in self.ml_models])
                 for sl_rep in range(0, n_sl_repititions):
-                    if dg_model.SLClass == "hc" or dg_model.SLClass =="tabu" or dg_model.SLClass =="rsmax2" or dg_model.SLClass == "mmhc" or dg_model.SLClass =="h2pc" or dg_model.SLClass =="gs" or dg_model.SLClass =="iamb" or dg_model.SLClass =="fast.iamb" or dg_model.SLClass =="iamb.fdr":
-                        sl_dg_metrics, sl_train_data, sl_test_data = self._evaluate_bnlearn_dg_model(dg_model=dg_model,learning_data_real=train_data,n_learning=n_learning, n_train=n_train,n_test=n_test, SLClass=dg_model.SLClass)
-                    elif dg_model.SLClass == "notears_linear":
-                        dg_model.fit(train_data)
-                        sl_dg_metrics, sl_train_data, sl_test_data = self._evaluate_dg_model(dg_model=dg_model,n_learning=n_learning,n_train=n_train,n_test=n_test)
+                    sl_dg_metrics, sl_train_data, sl_test_data = self._evaluate_bnlearn_dg_model(dg_model=dg_model,learning_data_real=train_data,n_learning=n_learning,n_train=n_train,n_test=n_test,SLClass=dg_model.SLClass)
                     for score_name in repetition_results.index.values.tolist():
                         for ml in self.ml_models:
                             repetition_results[ml.name][score_name].append(sl_dg_metrics[dg_model.SLClass][ml.name][score_name])
                 for ml in self.ml_models:
                     repetition_results[ml.name][score_name] = mean(repetition_results[ml.name][score_name])
-                    list_of_comparable_ranks_in_one_repitition[ml.name] = repetition_results[ml.name]['balanced_accuracy_score']
-                    list_of_avg_all_ml_accuracies_from_practitioner_sl_world[dg_model.SLClass][ml.name].append(repetition_results[ml.name]['balanced_accuracy_score'])
-                list_of_all_ml_accuracies_from_practitioner_sl_world[dg_model.SLClass].append(list_of_comparable_ranks_in_one_repitition.copy())
-                top_rank_per_sl = max(list_of_comparable_ranks_in_one_repitition, key=list_of_comparable_ranks_in_one_repitition.get)
-                top_accuracies_per_sl = max(list_of_comparable_ranks_in_one_repitition.values())
-                list_of_comparable_ranks_in_one_repitition.clear()
-                list_of_top_ranks_from_practitioner_sl_world[dg_model.SLClass].append(top_rank_per_sl)
-                list_of_top_accuracies_from_practitioner_sl_world[dg_model.SLClass].append(top_accuracies_per_sl)
-        for ml in self.ml_models:
-            list_of_avg_all_ml_accuracies_from_practitioner_limited_world[ml.name] = mean(list_of_avg_all_ml_accuracies_from_practitioner_limited_world[ml.name])
-        for dg_model in self.dg_models:
-            for ml in self.ml_models:
-                list_of_avg_all_ml_accuracies_from_practitioner_sl_world[dg_model.SLClass][ml.name] = mean(list_of_avg_all_ml_accuracies_from_practitioner_sl_world[dg_model.SLClass][ml.name])
+                    list_of_learning_length_all_ml_avg_nsl_accuracies[dg_model.SLClass][ml.name].append(repetition_results[ml.name][score_name])
         print("----- Output of analysis -----")
-        print("Infinite scenario ranks: ")
-        print(list_of_top_true_ranks)
-        print("Infinite scenario accuracies: ")
-        print(list_of_top_true_accuracies)
-        print("Infinite scenario avg accuracies for all ml methods: ")
-        print(list_of_avg_all_ml_true_accuracies)
         print("Infinite scenario all accuracies for all ml methods: ")
-        print(list_of_all_ml_true_accuracies)
-        print("Limited real-world scenario ranks: ")
-        print(list_of_top_ranks_from_practitioner_limited_world)
-        print("Limited real-world scenario accuracies: ")
-        print(list_of_top_accuracies_from_practitioner_limited_world)
-        print("Limited real-world avg accuracies for all ml methods: ")
-        print(list_of_avg_all_ml_accuracies_from_practitioner_limited_world)
+        print(list_of_learning_length_all_ml_avg_ntrue_accuracies)
         print("Limited real-world all accuracies for all ml methods: ")
-        print(list_of_all_ml_accuracies_from_practitioner_limited_world)
-        print("SL-supported scenario ranks: ")
-        print(list_of_top_ranks_from_practitioner_sl_world)
-        print("SL-supported scenario accuracies: ")
-        print(list_of_top_accuracies_from_practitioner_sl_world)
-        print("SL-supported avg accuracies for all ml methods: ")
-        print(list_of_avg_all_ml_accuracies_from_practitioner_sl_world)
+        print(list_of_learning_length_all_ml_avg_nlearning_accuracies)
         print("SL-supported all accuracies for all ml methods: ")
-        print(list_of_all_ml_accuracies_from_practitioner_sl_world)
+        print(list_of_learning_length_all_ml_avg_nsl_accuracies)
         print("----- End of Analysis Output -----")
-        return [list_of_top_true_ranks, list_of_top_true_accuracies, list_of_avg_all_ml_true_accuracies, list_of_all_ml_true_accuracies, list_of_top_ranks_from_practitioner_limited_world, list_of_top_accuracies_from_practitioner_limited_world, list_of_avg_all_ml_accuracies_from_practitioner_limited_world, list_of_all_ml_accuracies_from_practitioner_limited_world, list_of_top_ranks_from_practitioner_sl_world, list_of_top_accuracies_from_practitioner_sl_world, list_of_avg_all_ml_accuracies_from_practitioner_sl_world, list_of_all_ml_accuracies_from_practitioner_sl_world]
+        return [list_of_learning_length_all_ml_avg_ntrue_accuracies, list_of_learning_length_all_ml_avg_nlearning_accuracies, list_of_learning_length_all_ml_avg_nsl_accuracies]#[list_of_top_true_ranks, list_of_avg_all_ml_true_accuracies, list_of_all_ml_true_accuracies, list_of_top_ranks_from_practitioner_limited_world, list_of_avg_all_ml_accuracies_from_practitioner_limited_world, list_of_all_ml_accuracies_from_practitioner_limited_world, list_of_top_ranks_from_practitioner_sl_world, list_of_avg_all_ml_accuracies_from_practitioner_sl_world, list_of_all_ml_accuracies_from_practitioner_sl_world]
 
     def analysis_coef_per_dg_model(self, dg_model_real: DGModel, n_learning: int = 100):
         corr_dict = {}
@@ -257,8 +191,7 @@ class Evaluator:
         '''
         metrics = {}
         for ml_model in self.ml_models:
-            metrics[f'{ml_model.name}'] = self._develop_ml_model(ml_model=ml_model, train_data=train_data,
-                                                                 test_data=test_data)
+            metrics[f'{ml_model.name}'] = self._develop_ml_model(ml_model=ml_model, train_data=train_data,test_data=test_data)
         return metrics
 
     def _evaluate_dg_model(self, dg_model: DGModel, n_learning: int, n_train: int, n_test: int, test_data: Data = None):
@@ -554,8 +487,7 @@ class Evaluator:
         learning_data = train_data[0:n_learning:1] if n_learning > 0 else None
         return metrics, learning_data, test_data
 
-    def _get_performance_by_repetition(self, dg_model: DGModel, n_samples_real: int, tr_frac: float, n_reps: int,
-                                       test_data=None):
+    def _get_performance_by_repetition(self, dg_model: DGModel, n_samples_real: int, tr_frac: float, n_reps: int,test_data=None):
         all_scores = {ml_model.name: {score.__name__: [] for score in self.scores} for ml_model in self.ml_models}
         train_data = None
 

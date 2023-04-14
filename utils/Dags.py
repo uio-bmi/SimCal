@@ -1,7 +1,7 @@
 import numpy as np
 # Ground truth DAG for pretended real-world
 def log_transformation(params0, params1, params2, params3):
-    sum = params0 * 2 + params1 - params2 + params3 + random.randint(0, 1)
+    sum = params0 * 2 + params1 - params2 + params3 + np.random.randint(0, 1)
     y = 1 / (1 + np.exp(-sum))
     y = 1 if y > 0.75 else 0
     return y
