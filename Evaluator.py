@@ -42,21 +42,10 @@ class Evaluator:
         for _ in range(n_repetitions):
             orig_train_data, test_data = self._get_train_and_test_from_dg(dg_model_real, n_samples, tr_frac)
             assert len(orig_train_data) + len(test_data) == n_samples
-
             for ml_model in self.ml_models:
                 result_per_repetition_per_model = self._develop_ml_model(ml_model, orig_train_data, test_data)
                 for score_name in results.index.values.tolist():
                     results[ml_model.name][score_name].append(result_per_repetition_per_model[score_name])
-
-        difference_to_average_by_ml = {}
-        for ml_model in self.ml_models:
-            average_performance = np.mean(results[ml_model.name][score_name])
-            list_of_difference_to_average = []
-            for num_repititon in range(n_repetitions):
-                difference_to_average = abs(results[ml_model.name][score_name][num_repititon] - average_performance)
-                list_of_difference_to_average.append(difference_to_average)
-            difference_to_average_by_ml[ml_model.name] = list_of_difference_to_average
-        pd.DataFrame(difference_to_average_by_ml).to_csv("analysis_0_benchmarking_infinite_relevancy.csv") #store every repitition difference to true performance by ML
         return results
 
     def analysis_1_per_dg_model(self, dg_model_real: DGModel, n_samples: int, tr_frac: float, n_btstrps: int):
@@ -98,19 +87,18 @@ class Evaluator:
             list_of_results[dg_model.SLClass] = repetition_results
         return list_of_results
 
-    def analysis_3_per_dg_model(self, dg_model_real: DGModel, n_learning: int, n_train: int,n_test: int, n_true_repetitions: int, n_learning_repititions: int, n_sl_repititions: int):
-        list_of_learning_length_all_ml_avg_ntrue_accuracies = {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}
-        list_of_learning_length_all_ml_avg_nlearning_accuracies = []
-        list_of_learning_length_all_ml_avg_nsl_accuracies = {"hc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]},"tabu": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "rsmax2": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "mmhc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "h2pc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "gs": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}, "pc.stable": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"SVCSigmoid":[],"LogisticLASSO":[],"MLPClassifier":[]}}
-        for learning_rep in range(0, n_learning_repititions):
-            dg_metrics, train_data, test_data = self._get_performance_by_repetition(dg_model_real, n_train + n_test,0.5, n_true_repetitions)
-            for ml in dg_metrics:
-                list_of_learning_length_all_ml_avg_ntrue_accuracies[ml].append(mean(dg_metrics[ml]['balanced_accuracy_score']))
-        for learning_rep in range(0, n_learning_repititions):
-            print("learning rep: ", learning_rep)
+    def analysis_3_per_dg_model(self, dg_model_real: DGModel, n_learning: int, n_train: int,n_test: int, n_true_repetitions: int, n_practitioner_repititions: int, n_sl_repititions: int):
+        list_of_ntrue_accuracies = {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}
+        list_of_npractitioner_accuracies = []
+        list_of_nsl_accuracies = {"hc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]},"tabu": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "rsmax2": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "mmhc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "h2pc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "gs": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "pc.stable": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}}
+        dg_metrics, train_data, test_data = self._get_performance_by_repetition(dg_model_real, n_train + n_test,0.5, n_true_repetitions)
+        for ml in dg_metrics:
+            list_of_ntrue_accuracies[ml] = dg_metrics[ml]['balanced_accuracy_score']
+        for practitioner_rep in range(0, n_practitioner_repititions):
+            print("learning rep: ", practitioner_rep)
             train_data, test_data = self._get_train_and_test_from_dg(dg_model_real, n_train + n_test, 0.5)
             limited_dg_metrics = self._develop_all_ml_models(train_data, test_data)
-            list_of_learning_length_all_ml_avg_nlearning_accuracies.append(limited_dg_metrics)
+            list_of_npractitioner_accuracies.append(limited_dg_metrics)
             for dg_model in self.dg_models:
                 print(dg_model.SLClass)
                 repetition_results = pd.DataFrame(
@@ -123,16 +111,16 @@ class Evaluator:
                             repetition_results[ml.name][score_name].append(sl_dg_metrics[dg_model.SLClass][ml.name][score_name])
                 for ml in self.ml_models:
                     repetition_results[ml.name][score_name] = mean(repetition_results[ml.name][score_name])
-                    list_of_learning_length_all_ml_avg_nsl_accuracies[dg_model.SLClass][ml.name].append(repetition_results[ml.name][score_name])
+                    list_of_nsl_accuracies[dg_model.SLClass][ml.name].append(repetition_results[ml.name][score_name])
         print("----- Output of analysis -----")
         print("Infinite scenario all accuracies for all ml methods: ")
-        print(list_of_learning_length_all_ml_avg_ntrue_accuracies)
+        print(list_of_ntrue_accuracies)
         print("Limited real-world all accuracies for all ml methods: ")
-        print(list_of_learning_length_all_ml_avg_nlearning_accuracies)
+        print(list_of_npractitioner_accuracies)
         print("SL-supported all accuracies for all ml methods: ")
-        print(list_of_learning_length_all_ml_avg_nsl_accuracies)
+        print(list_of_nsl_accuracies)
         print("----- End of Analysis Output -----")
-        return [list_of_learning_length_all_ml_avg_ntrue_accuracies, list_of_learning_length_all_ml_avg_nlearning_accuracies, list_of_learning_length_all_ml_avg_nsl_accuracies]#[list_of_top_true_ranks, list_of_avg_all_ml_true_accuracies, list_of_all_ml_true_accuracies, list_of_top_ranks_from_practitioner_limited_world, list_of_avg_all_ml_accuracies_from_practitioner_limited_world, list_of_all_ml_accuracies_from_practitioner_limited_world, list_of_top_ranks_from_practitioner_sl_world, list_of_avg_all_ml_accuracies_from_practitioner_sl_world, list_of_all_ml_accuracies_from_practitioner_sl_world]
+        return [list_of_ntrue_accuracies, list_of_npractitioner_accuracies, list_of_nsl_accuracies, n_true_repetitions, n_practitioner_repititions, n_sl_repititions]
 
     def analysis_coef_per_dg_model(self, dg_model_real: DGModel, n_learning: int = 100):
         corr_dict = {}
@@ -506,6 +494,14 @@ class Evaluator:
         For a given ml model, train it on the provided training set and evaluate it on the test set.
 
         '''
+        #train_data.dropna()
+        #test_data.dropna()
+        #print(train_data.isna().sum().sum())
+        train_data.X = train_data.X.fillna(1)
+        train_data.y = train_data.y.fillna(1)
+        test_data.X = test_data.X.fillna(1)
+        test_data.y = test_data.y.fillna(1)
+
         ml_model.learn(train_data)
         scores = self._evaluate_ml_model(ml_model, test_data)
         return scores
