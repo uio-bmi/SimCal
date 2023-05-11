@@ -1,7 +1,7 @@
 import pandas as pd
 from typing import List, Callable
 
-from numpy import mean
+from numpy import mean, int64
 
 from dg_models.DGModel import DGModel
 from ml_models.MachineLearner import MachineLearner
@@ -88,14 +88,14 @@ class Evaluator:
         return list_of_results
 
     def analysis_3_per_dg_model(self, dg_model_real: DGModel, n_learning: int, n_train: int,n_test: int, n_true_repetitions: int, n_practitioner_repititions: int, n_sl_repititions: int):
-        list_of_ntrue_accuracies = {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}
+        list_of_ntrue_accuracies = {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}
         list_of_npractitioner_accuracies = []
-        list_of_nsl_accuracies = {"hc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]},"tabu": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "rsmax2": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "mmhc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "h2pc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "gs": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "pc.stable": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCRbf":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}}
+        list_of_nsl_accuracies = {"hc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]},"tabu": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "rsmax2": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "mmhc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "h2pc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "gs": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "pc.stable": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}}
         dg_metrics, train_data, test_data = self._get_performance_by_repetition(dg_model_real, n_train + n_test,0.5, n_true_repetitions)
         for ml in dg_metrics:
             list_of_ntrue_accuracies[ml] = dg_metrics[ml]['balanced_accuracy_score']
         for practitioner_rep in range(0, n_practitioner_repititions):
-            print("learning rep: ", practitioner_rep)
+            print("practitioner rep: ", practitioner_rep)
             train_data, test_data = self._get_train_and_test_from_dg(dg_model_real, n_train + n_test, 0.5)
             limited_dg_metrics = self._develop_all_ml_models(train_data, test_data)
             list_of_npractitioner_accuracies.append(limited_dg_metrics)
@@ -197,8 +197,9 @@ class Evaluator:
     def _evaluate_bnlearn_dg_model(self, dg_model: DGModel, learning_data_real, n_learning: int, n_train: int, n_test: int,SLClass: str):
         learning_data_real = learning_data_real.all
         learning_data_real.loc[0] = 1
+        learning_data_real.loc[1] = 0
 
-        #learning_data_real.loc[0,"AppDtGnTm"] = 1
+        #learning_data_real.loc[0,"SNode_8"] = 1
         #learning_data_real.loc[0, "PrtThread"] = 1
         #learning_data_real.loc[0, "TnrSpply"] = 1
         #learning_data_real.loc[0, "AvlblVrtlMmry"] = 1
@@ -348,8 +349,8 @@ class Evaluator:
         bn_hc = robjects.r['bn_learn']
         bn_train_output = bn_hc(learning_data_real, n_train, n_test)
 
-        train_data = np.array(bn_train_output[0])
-        test_data = np.array(bn_train_output[1])
+        train_data = np.array(bn_train_output[0], dtype=int64)
+        test_data = np.array(bn_train_output[1], dtype=int64)
         X = pd.DataFrame(train_data[:, :-1])
         y = pd.Series(train_data[:, -1], name="Y")
         train_data = Data(name="train", X=X, y=y)
@@ -494,14 +495,6 @@ class Evaluator:
         For a given ml model, train it on the provided training set and evaluate it on the test set.
 
         '''
-        #train_data.dropna()
-        #test_data.dropna()
-        #print(train_data.isna().sum().sum())
-        train_data.X = train_data.X.fillna(1)
-        train_data.y = train_data.y.fillna(1)
-        test_data.X = test_data.X.fillna(1)
-        test_data.y = test_data.y.fillna(1)
-
         ml_model.learn(train_data)
         scores = self._evaluate_ml_model(ml_model, test_data)
         return scores
