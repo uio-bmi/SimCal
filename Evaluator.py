@@ -17,6 +17,7 @@ from rpy2.robjects.vectors import DataFrame, StrVector
 from rpy2.robjects.packages import importr
 pandas2ri.activate()
 
+# This class provides high-level data-generation and ML benchmarking functions for a user-specified world with parameters
 class Evaluator:
     def __init__(self, ml_models: List[MachineLearner], dg_models: List[DGModel], real_models: List[DGModel],
                  scores: List[Callable], outcome_name: str = "Y"):
@@ -26,15 +27,13 @@ class Evaluator:
         self.dg_models = dg_models
         self.outcome_name = outcome_name
 
-    def analysis_0_per_dg_model(self, dg_model_real: DGModel, n_repetitions, n_samples: int, tr_frac: float):
+    def realworld_benchmark(self, dg_model_real: DGModel, n_repetitions, n_samples: int, tr_frac: float):
         """
-
-        :param dg_model_real: a (pretended) real-world DagSim model
+        :param dg_model_real: a real-world DagSim model
         :n_repetitions: number of times to repeat training-testing
         :param n_samples: number of samples to generate for training + testing
         :param tr_frac: fraction of data for training
-        :param n_btstrps: numer of times to  perform bootstrap
-        :return: btstrp_results: dict of shape {model_name: {score_name: list_of_score_values], ...}, ...}
+        :return: results: benchmarks in the shape {model_name: {score_name: list_of_score_values], ...}, ...}
         """
         results = pd.DataFrame(data=[[[] for _ in range(len(self.ml_models))] for __ in range(len(self.scores))],
                                       index=[sc.__name__ for sc in self.scores],
@@ -48,14 +47,13 @@ class Evaluator:
                     results[ml_model.name][score_name].append(result_per_repetition_per_model[score_name])
         return results
 
-    def analysis_1_per_dg_model(self, dg_model_real: DGModel, n_samples: int, tr_frac: float, n_btstrps: int):
+    def realworld_benchmark_bootstrapping(self, dg_model_real: DGModel, n_samples: int, tr_frac: float, n_btstrps: int):
         """
-
-        :param dg_model_real: a (pretended) real-world DagSim model
+        :param dg_model_real: a real-world DagSim model
         :param n_samples: number of samples to generate for training + testing
         :param tr_frac: fraction of data for training
-        :param n_btstrps: numer of times to  perform bootstrap
-        :return: btstrp_results: dict of shape {model_name: {score_name: list_of_score_values], ...}, ...}
+        :param n_btstrps: number of times to perform bootstrapping
+        :return: results: benchmarks in the shape {model_name: {score_name: list_of_score_values], ...}, ...}
         """
         orig_train_data, test_data = self._get_train_and_test_from_dg(dg_model_real, n_samples, tr_frac)
 
@@ -72,22 +70,17 @@ class Evaluator:
                     btstrp_results[ml_model.name][score_name].append(result_per_btsrtp_per_model[score_name])
         return btstrp_results
 
-    def analysis_2_per_dg_model(self, dg_model_real: DGModel, n_learning: int, n_train: int,n_test: int, n_repetitions):
-        list_of_results = {}
-        metrics = {}
-        dg_metrics, learning_data_real, test_data = self._get_performance_by_repetition(dg_model_real, n_train+n_test,0.5, n_repetitions)
-        #list_of_results["Real-world"] = dg_metrics
-        for dg_model in self.dg_models:
-            repetition_results = pd.DataFrame(data=[[[] for _ in range(len(self.ml_models))] for __ in range(len(self.scores))],index=[sc.__name__ for sc in self.scores],columns=[md.name for md in self.ml_models])
-            for _ in range(n_repetitions):
-                dg_metrics, _, _ = self._evaluate_bnlearn_dg_model(dg_model=dg_model, learning_data_real=learning_data_real,n_learning=n_learning, n_train=n_train, n_test=n_test,SLClass=dg_model.SLClass)
-                for score_name in repetition_results.index.values.tolist():
-                    for ml_model in self.ml_models:
-                        repetition_results[ml_model.name][score_name].append(dg_metrics[dg_model.SLClass][ml_model.name][score_name])
-            list_of_results[dg_model.SLClass] = repetition_results
-        return list_of_results
-
-    def analysis_3_per_dg_model(self, dg_model_real: DGModel, n_learning: int, n_train: int,n_test: int, n_true_repetitions: int, n_practitioner_repititions: int, n_sl_repititions: int):
+    def meta_simulate(self, dg_model_real: DGModel, n_learning: int, n_train: int,n_test: int, n_true_repetitions: int, n_practitioner_repititions: int, n_sl_repititions: int):
+        """
+            :param dg_model_real: a real-world DagSim model
+            :param n_learning: number of samples to draw from n_train to use in learners
+            :param n_train: number of samples to generate for training
+            :param n_test: number of samples to generate for testing
+            :param n_true_repetitions: number of times to repeat benchmarking in the true real-world
+            :param n_practitioner_repititions: number of times to repeat benchmarking in a limited real-world
+            :param n_sl_repititions: number of times to repeat benchmarking in the learner
+            :return: results: benchmarks in the shape {model_name: {learner: {score_name: list_of_score_values], ...}, ...}, ...}
+        """
         list_of_ntrue_accuracies = {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}
         list_of_npractitioner_accuracies = []
         list_of_nsl_accuracies = {"hc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]},"tabu": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "rsmax2": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "mmhc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "h2pc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "gs": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "pc.stable": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}}
@@ -122,49 +115,9 @@ class Evaluator:
         print("----- End of Analysis Output -----")
         return [list_of_ntrue_accuracies, list_of_npractitioner_accuracies, list_of_nsl_accuracies, n_true_repetitions, n_practitioner_repititions, n_sl_repititions]
 
-    def analysis_coef_per_dg_model(self, dg_model_real: DGModel, n_learning: int = 100):
-        corr_dict = {}
-        real_data, corr_dict[dg_model_real.name] = self._get_corr(dg_model_real)
-
-        for dg_model in self.dg_models:
-            dg_model.fit(real_data[0:n_learning])
-            _, corr_dict[dg_model.name] = self._get_corr(dg_model)
-
-        return corr_dict
-
-    def analysis_violin_per_dg_model(self, dg_model_real: DGModel, n_samples: int, tr_frac: float, n_reps: int):
-        scores_per_dg_model = {}
-        dg_model_real_scores, train_data, test_data = self._get_performance_by_repetition(dg_model_real, n_samples,
-                                                                                          tr_frac, n_reps)
-        scores_per_dg_model[dg_model_real.name] = dg_model_real_scores
-        for dg_model in self.dg_models:
-            dg_model.fit(train_data)
-            if dg_model.num_vars != len(test_data.all.columns):
-                continue
-            dg_model_scores, *_ = self._get_performance_by_repetition(dg_model, n_samples, tr_frac, n_reps,
-                                                                      test_data=test_data)
-            scores_per_dg_model[dg_model.name] = dg_model_scores
-        return scores_per_dg_model
-
-    def analysis_2b_per_dg_model(self, dg_model_real: DGModel,n_samples: int, tr_frac: float, n_reps: int):
-        scores_per_dg_model = {}
-        dg_model_real_scores, train_data, test_data = self._get_performance_by_repetition(dg_model_real, n_samples,
-                                                                                          tr_frac, n_reps)
-        scores_per_dg_model[dg_model_real.name] = dg_model_real_scores
-        for dg_model in self.dg_models:
-            dg_model.fit(train_data)
-            if dg_model.num_vars != len(test_data.all.columns):
-                continue
-            dg_model_scores, *_ = self._get_performance_by_repetition(dg_model, n_samples, tr_frac, n_reps,
-                                                                      test_data=test_data)
-            scores_per_dg_model[dg_model.name] = dg_model_scores
-        #print(scores_per_dg_model)
-        return scores_per_dg_model
-
     def _evaluate_ml_model(self, ml_model: MachineLearner, test_data: Data):
         '''
         Given a **trained** ml model, evaluate its performance using all the defined metrics on the test set.
-
         '''
         y_pred = ml_model.predict(test_data)
         metrics = {}
@@ -198,17 +151,6 @@ class Evaluator:
         learning_data_real = learning_data_real.all
         learning_data_real.loc[0] = 1
         learning_data_real.loc[1] = 0
-
-        #learning_data_real.loc[0,"SNode_8"] = 1
-        #learning_data_real.loc[0, "PrtThread"] = 1
-        #learning_data_real.loc[0, "TnrSpply"] = 1
-        #learning_data_real.loc[0, "AvlblVrtlMmry"] = 1
-        #learning_data_real.loc[0, "AppData"] = 1
-        #learning_data_real.loc[0, "AppOK"] = 1
-        #learning_data_real.loc[0, "CblPrtHrdwrOK"] = 1
-        #print(count(learning_data_real$PrtThread))
-        #print(table(is.na(training_output)))
-        #print(sapply(learning_data_real, levels))
 
         if SLClass == "hc":
             robjects.r('''
@@ -351,119 +293,6 @@ class Evaluator:
 
         train_data = np.array(bn_train_output[0], dtype=int64)
         test_data = np.array(bn_train_output[1], dtype=int64)
-        X = pd.DataFrame(train_data[:, :-1])
-        y = pd.Series(train_data[:, -1], name="Y")
-        train_data = Data(name="train", X=X, y=y)
-        X = pd.DataFrame(test_data[:, :-1])
-        y = pd.Series(test_data[:, -1], name="Y")
-        test_data = Data(name="test", X=X, y=y)
-
-        metrics = self._develop_all_ml_models(train_data, test_data)
-        metrics = {f'{dg_model.name}': metrics}
-        learning_data = train_data[0:n_learning:1] if n_learning > 0 else None
-        return metrics, learning_data, test_data
-
-    def _evaluate_bnstruct_dg_model(self, dg_model: DGModel, learning_data_real, n_learning: int, n_train: int, n_test: int,SLClass: str):
-        learning_data_real = learning_data_real.all
-
-        #learning_data_real.loc[0,"AppDtGnTm"] = 1
-        #learning_data_real.loc[0, "PrtThread"] = 1
-        #learning_data_real.loc[0, "TnrSpply"] = 1
-        #learning_data_real.loc[0, "AvlblVrtlMmry"] = 1
-        #learning_data_real.loc[0, "AppData"] = 1
-        #learning_data_real.loc[0, "AppOK"] = 1
-        #learning_data_real.loc[0, "CblPrtHrdwrOK"] = 1
-        #print(count(learning_data_real$PrtThread))
-        #print(table(is.na(training_output)))
-        #print(sapply(learning_data_real, levels))
-
-        if SLClass == "sem":
-            robjects.r('''
-                        library(bnlearn)
-                        library(plyr)
-                        bn_struct <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
-                        learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
-                        my_bn <- cextend(iamb.fdr(learning_data_real, undirected=FALSE), strict=FALSE)
-                        fit = bn.fit(my_bn, learning_data_real)
-                        training_output = rbn(my_bn, n_train, learning_data_real)
-                        testing_output = rbn(my_bn, n_test, learning_data_real)
-                        training_output[is.na(training_output)] <- 0
-                        testing_output[is.na(testing_output)] <- 0
-                        list_output <- list(training_output, testing_output)
-                        }
-                        ''')
-        elif SLClass == "second":
-            robjects.r('''
-                        install.packages("tetrad")
-                        library(tetrad)
-                        bn_struct <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
-                        my_bn <- pc(learning_data_real, indepTest=binCItest, labels=colnames(learning_data_real))
-                        print(my_bn)
-                        training_output = simulateSEM(my_bn, n=n_train)
-                        testing_output = simulateSEM(my_bn, n=n_test)
-                        print(training_output)
-                        print(testing_output)
-                        training_output[is.na(training_output)] <- 0
-                        testing_output[is.na(testing_output)] <- 0
-                        list_output <- list(training_output, testing_output)
-                        }
-                        ''')
-        elif SLClass == "third":
-            robjects.r('''
-                        install.packages("bnstruct")
-                        library(bnstruct)
-                        bn_struct <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
-                        my_bn <- learn.network(x=BNDataset(learning_data_real, discreteness=rep(TRUE, ncol(learning_data_real)), variables=colnames(learning_data_real), algo="sem", scoring.func="AIC"))
-                        print(my_bn)
-                        training_output = sample_from_dag(my_bn, n_train)
-                        testing_output = sample_from_dag(my_bn, n_test)
-                        print(training_output)
-                        print(testing_output)
-                        training_output[is.na(training_output)] <- 0
-                        testing_output[is.na(testing_output)] <- 0
-                        list_output <- list(training_output, testing_output)
-                        }
-                        ''')
-        elif SLClass == "fourth":
-            robjects.r('''
-                        install.packages("BDgraph")
-                        library(BDgraph)
-                        bn_struct <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
-                        fit <- bdgraph(learning_data_real, algorithm = "rjmcmc")
-                        training_output = bdgraph.sim(fit, n = n_train)
-                        testing_output = bdgraph.sim(fit, n = n_test)
-                        print(training_output)
-                        print(testing_output)
-                        training_output[is.na(training_output)] <- 0
-                        testing_output[is.na(testing_output)] <- 0
-                        list_output <- list(training_output, testing_output)
-                        }
-                        ''')
-        elif SLClass == "Fifth":
-            robjects.r('''
-                        install.packages("bnlearn")
-                        install.packages("pcalg")
-                        library(pcalg)
-                        library(bnlearn)
-                        bn_struct <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
-                        suffstat <- list(C = cor(learning_data_real), n = nrow(learning_data_real)) 
-                        pcalg <- pc(suffstat, indepTest=gaussCItest, p=ncol(learning_data_real), labels=colnames(learning_data_real), alpha=0.05)
-                        dag <- pcalg2dag(pcalg$graph)
-                        training_output = rbn(dag, n = n_train)
-                        testing_output = rbn(dag, n = n_test)
-                        print(training_output)
-                        print(testing_output)
-                        training_output[is.na(training_output)] <- 0
-                        testing_output[is.na(testing_output)] <- 0
-                        list_output <- list(training_output, testing_output)
-                        }
-                        ''')
-
-        bn_sem = robjects.r['bn_struct']
-        bn_train_output = bn_sem(learning_data_real, n_train, n_test)
-
-        train_data = np.array(bn_train_output[0])
-        test_data = np.array(bn_train_output[1])
         X = pd.DataFrame(train_data[:, :-1])
         y = pd.Series(train_data[:, -1], name="Y")
         train_data = Data(name="train", X=X, y=y)

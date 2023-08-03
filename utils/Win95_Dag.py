@@ -1627,6 +1627,7 @@ def get_asia():
     listNodes = [Prior1, Prior2, Prior3, Prior4, Prior5, Prior6, Prior7, Prior8]
     asia = Graph(name="Asia Cancer Dysponea Example - Real-world", list_nodes=listNodes)
     ds_model = DagsimModel("Real-world", asia)
+    return ds_model
 
 
 

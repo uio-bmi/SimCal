@@ -2,7 +2,6 @@ import numpy as np
 from dagsim.base import Graph, Node
 from dg_models.DagsimModel import DagsimModel
 
-
 def get_GOAL_2():
     if np.random.binomial(n=1, p=0.02):
         return 0

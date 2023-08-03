@@ -16,10 +16,9 @@ class DagsimModel(DGModel):
         pass
 
     def _generate(self, num_samples: int, outcome_name: str):
-        data = pd.DataFrame.from_dict(self.model.simulate(num_samples, csv_name="dataTest"))
+        data = pd.DataFrame.from_dict(self.model.simulate(num_samples, csv_name="dataOutput"))
         data.fillna(0, inplace=True)
         data.replace(1.0, 1, inplace=True)
         data.replace(0.0, 0, inplace=True)
-        data = Data(name=self.name, X=data.drop(outcome_name, axis=1),
-                    y=data.loc[:, outcome_name])
+        data = Data(name=self.name, X=data.drop(outcome_name, axis=1),y=data.loc[:, outcome_name])
         return data
