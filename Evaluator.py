@@ -81,15 +81,19 @@ class Evaluator:
             :param n_sl_repititions: number of times to repeat benchmarking in the learner
             :return: results: benchmarks in the shape {model_name: {learner: {score_name: list_of_score_values], ...}, ...}, ...}
         """
-        list_of_ntrue_accuracies = {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}
+        list_of_ntrue_accuracies = {method.name: [] for method in self.ml_models}
         list_of_npractitioner_accuracies = []
-        list_of_nsl_accuracies = {"hc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]},"tabu": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "rsmax2": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "mmhc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "h2pc": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "gs": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}, "pc.stable": {"DecisionTreeClassifier":[],"RandomForestClassifier":[],"KNeighborsClassifier":[],"GradientBoostingClassifier":[],"SVCLinear":[],"LogisticLASSO":[],"MLPClassifier":[]}}
+        list_of_nsl_accuracies = {learner.SLClass: {method.name: [] for method in self.ml_models} for learner in self.dg_models}
         dg_metrics, train_data, test_data = self._get_performance_by_repetition(dg_model_real, n_train + n_test,0.5, n_true_repetitions)
         for ml in dg_metrics:
             list_of_ntrue_accuracies[ml] = dg_metrics[ml]['balanced_accuracy_score']
         for practitioner_rep in range(0, n_practitioner_repititions):
             print("practitioner rep: ", practitioner_rep)
             train_data, test_data = self._get_train_and_test_from_dg(dg_model_real, n_train + n_test, 0.5)
+            train_data.X.iloc[0] = 1
+            train_data.y.iloc[0] = 1
+            test_data.X.iloc[0] = 1
+            test_data.y.iloc[0] = 1
             limited_dg_metrics = self._develop_all_ml_models(train_data, test_data)
             list_of_npractitioner_accuracies.append(limited_dg_metrics)
             for dg_model in self.dg_models:
@@ -113,7 +117,7 @@ class Evaluator:
         print("SL-supported all accuracies for all ml methods: ")
         print(list_of_nsl_accuracies)
         print("----- End of Analysis Output -----")
-        return [list_of_ntrue_accuracies, list_of_npractitioner_accuracies, list_of_nsl_accuracies, n_true_repetitions, n_practitioner_repititions, n_sl_repititions]
+        return [list_of_ntrue_accuracies, list_of_npractitioner_accuracies, list_of_nsl_accuracies, n_true_repetitions, n_practitioner_repititions, n_sl_repititions, self.dg_models, self.ml_models]
 
     def _evaluate_ml_model(self, ml_model: MachineLearner, test_data: Data):
         '''
@@ -295,9 +299,13 @@ class Evaluator:
         test_data = np.array(bn_train_output[1], dtype=int64)
         X = pd.DataFrame(train_data[:, :-1])
         y = pd.Series(train_data[:, -1], name="Y")
+        X.iloc[0] = 1
+        y.iloc[0] = 1
         train_data = Data(name="train", X=X, y=y)
         X = pd.DataFrame(test_data[:, :-1])
         y = pd.Series(test_data[:, -1], name="Y")
+        X.iloc[0] = 1
+        y.iloc[0] = 1
         test_data = Data(name="test", X=X, y=y)
 
         metrics = self._develop_all_ml_models(train_data, test_data)
@@ -313,6 +321,10 @@ class Evaluator:
             train_data = dg_model.generate(int(n_samples_real * tr_frac), self.outcome_name)
             if test_data is None:
                 test_data = dg_model.generate(int(n_samples_real * (1 - tr_frac)), self.outcome_name)
+            train_data.X.iloc[0] = 1
+            train_data.y.iloc[0] = 1
+            test_data.X.iloc[0] = 1
+            test_data.y.iloc[0] = 1
             for ml_model in self.ml_models:
                 scores = self._develop_ml_model(ml_model, train_data, test_data)
                 for score_name in scores.keys():

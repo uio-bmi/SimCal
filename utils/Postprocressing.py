@@ -72,56 +72,91 @@ class Postprocessing():
         n_true_repetitions = results[3]
         n_practitioner_repititions = results[4]
         n_sl_repititions = results[5]
+        self.dg_models = results[6]
+        self.ml_models = results[7]
+
+        ml_labels = [ml.name for ml in self.ml_models]
 
         # Create boxplot for relative performance per pathways across all repetition for all ml methods
-        sl_list = ["hc", "tabu", "rsmax2", "mmhc","h2pc", "gs","pc.stable"]
-        ml_methods = ["DecisionTreeClassifier", "RandomForestClassifier", "KNeighborsClassifier","GradientBoostingClassifier", "SVCLinear", "LogisticLASSO","MLPClassifier"]
         sns.set_style('whitegrid')
         sns.set(rc={"figure.figsize": (10, 10)})
 
+        output_pd = pd.DataFrame(columns=['est','avgml','est-to-avgml','true','est-true', 'ML_method', 'SL','repetition'])
         # Placeholder for boxploting results, saving operation is done at the end of the function
         performances = pd.DataFrame(columns=['est-true', 'est-to-avgml','ML_method', 'SL'])
-        for practitioner_rep in range(0, len(list_of_npractitioner_accuracies)):
+        for practitioner_rep in range(0, n_practitioner_repititions):
             ml_method_performance_list = []
             practitioner_rep_ml_methods = list_of_npractitioner_accuracies[practitioner_rep]
-            for item in practitioner_rep_ml_methods.values(): ml_method_performance_list.append(item["balanced_accuracy_score"])
+            for item in practitioner_rep_ml_methods:
+                ml_method_performance_list.append(practitioner_rep_ml_methods[item]["balanced_accuracy_score"])
             avg_ml_rep_performance = mean(ml_method_performance_list)
-            for ml in ml_methods:
-                true_rep_ml_performance = list_of_ntrue_accuracies[ml][practitioner_rep]
-                performances = performances.append({'est-true': (practitioner_rep_ml_methods[ml]['balanced_accuracy_score'] - true_rep_ml_performance), 'est-to-avgml': practitioner_rep_ml_methods[ml]['balanced_accuracy_score'] - avg_ml_rep_performance,'ML_method': ml, 'SL': 'limited-real'},ignore_index=True)
-        for sl in sl_list:
-            for ml in ml_methods:
-                for sl_rep in range(0, n_sl_repititions):
-                    temp = []
-                    for ml_avg in ml_methods:
-                        temp.append(list_of_nsl_accuracies[sl][ml_avg][sl_rep])
-                    avg_ml_rep_performance = mean(temp)
-                    sl_rep_ml_performance = list_of_nsl_accuracies[sl][ml][sl_rep]
-                    true_rep_ml_performance = list_of_ntrue_accuracies[ml][sl_rep]
-                    performances = performances.append({'est-true': (sl_rep_ml_performance - true_rep_ml_performance), 'est-to-avgml': (sl_rep_ml_performance - avg_ml_rep_performance),'ML_method': ml, 'SL': sl},ignore_index=True)
+            std_ml_rep_performance = np.std(ml_method_performance_list)
+            for ml in self.ml_models:
+                true_rep_ml_performance = mean(list_of_ntrue_accuracies[ml.name])
+                performances = performances.append({'est-true': (practitioner_rep_ml_methods[ml.name]['balanced_accuracy_score'] - true_rep_ml_performance), 'est-to-avgml': (practitioner_rep_ml_methods[ml.name]['balanced_accuracy_score'] - avg_ml_rep_performance) / std_ml_rep_performance,'ML_method': ml.name, 'SL': 'limited-real'},ignore_index=True)
+                output_pd = output_pd.append({'est': (practitioner_rep_ml_methods[ml.name]['balanced_accuracy_score']),'avgml': avg_ml_rep_performance,
+                                                    'est-to-avgml': practitioner_rep_ml_methods[ml.name]['balanced_accuracy_score'] - avg_ml_rep_performance,
+                                              'true': true_rep_ml_performance, 'est-true': (practitioner_rep_ml_methods[ml.name]['balanced_accuracy_score'] - true_rep_ml_performance),
+                                                    'ML_method': ml.name, 'SL': 'limited-real','repetition': practitioner_rep}, ignore_index=True)
+
+        for sl in self.dg_models:
+            for practitioner_rep in range(0, n_practitioner_repititions):
+                ml_method_performance_list = []
+                for ml in self.ml_models:
+                    ml_method_performance_list.append(list_of_nsl_accuracies[sl.SLClass][ml.name][practitioner_rep])
+                avg_ml_rep_performance = mean(ml_method_performance_list)
+                std_ml_rep_performance = np.std(ml_method_performance_list)
+                for ml in self.ml_models:
+                    sl_rep_ml_performance = list_of_nsl_accuracies[sl.SLClass][ml.name][practitioner_rep]
+                    true_rep_ml_performance = mean(list_of_ntrue_accuracies[ml.name])
+                    performances = performances.append({'est-true': (sl_rep_ml_performance - true_rep_ml_performance), 'est-to-avgml': (sl_rep_ml_performance - avg_ml_rep_performance) / std_ml_rep_performance,'ML_method': ml.name, 'SL': sl.SLClass},ignore_index=True)
+                    output_pd = output_pd.append({'est': sl_rep_ml_performance,'avgml': avg_ml_rep_performance, 'est-to-avgml': (sl_rep_ml_performance - avg_ml_rep_performance),'true': true_rep_ml_performance, 'est-true': (sl_rep_ml_performance - true_rep_ml_performance),'ML_method': ml.name, 'SL': sl.SLClass, 'repetition': practitioner_rep}, ignore_index=True)
+        output_pd.to_csv('boxplot-performance_per_repetition.csv')
+
+        # Updated version of sl matched histogram
+        #for sl in sl_match_counts.keys():
+        #    for repetition in range(0, n_practitioner_repititions):
+        #        list_of_comparable_ranks_in_real_repitition = {method.name: list_of_npractitioner_accuracies[repetition][method.name]['balanced_accuracy_score'] for method in self.ml_models}
+        #        list_of_comparable_ranks_in_learner_repitition = {method.name: list_of_nsl_accuracies[sl][method.name][repetition] for method in self.ml_models}
+        #    if max(list_of_comparable_ranks_in_learner_repitition,key=list_of_comparable_ranks_in_learner_repitition.get) == max(list_of_comparable_ranks_in_real_repitition, key=list_of_comparable_ranks_in_real_repitition.get):
+        #        sl_match_counts[sl] += 1
+
+        # Update version 2
+        #sl_match_counts = {learner.SLClass: 0 for learner in self.dg_models}
+        #for sl in sl_match_counts.keys():
+        #    for repetition in range(0, n_practitioner_repititions):
+        #        list_of_comparable_ranks_in_real_repitition = {method.name: 0 for method in self.ml_models}
+        #        list_of_comparable_ranks_in_learner_repitition = {method.name: 0 for method in self.ml_models}
+                # list_of_comparable_ranks_in_real_repitition = {method.name: list_of_npractitioner_accuracies[repetition][method.name]['balanced_accuracy_score'] for method in self.ml_models}
+                # list_of_comparable_ranks_in_learner_repitition = {method.name: list_of_nsl_accuracies[sl][method.name][repetition] for method in self.ml_models}
+        #        for ml in self.ml_models:
+        #            list_of_comparable_ranks_in_real_repitition[ml.name] = list_of_npractitioner_accuracies[repetition][ml.name]['balanced_accuracy_score']
+        #            list_of_comparable_ranks_in_learner_repitition[ml.name] = list_of_nsl_accuracies[sl][ml.name][repetition]
+        #        if max(list_of_comparable_ranks_in_learner_repitition,key=list_of_comparable_ranks_in_learner_repitition.get) == max(list_of_comparable_ranks_in_real_repitition,key=list_of_comparable_ranks_in_real_repitition.get):
+        #            sl_match_counts[sl] += 1
 
         # Create absolute match proportion bar graph between pathway's top ml method and true ml method
         matches_from_practitioner_limited_world = 0
-        sl_match_counts = {"hc": 0, "tabu": 0, "rsmax2": 0, "mmhc": 0, "h2pc": 0, "gs": 0,"pc.stable": 0}# ,"iamb":0,"fast.iamb":0,"iamb.fdr":0}
-        for repetition in range(0, n_true_repetitions):
-            list_of_comparable_ranks_in_one_repitition = {"DecisionTreeClassifier": 0, "RandomForestClassifier": 0,"KNeighborsClassifier": 0, "GradientBoostingClassifier": 0,"SVCLinear": 0, "LogisticLASSO": 0, "MLPClassifier": 0}
-            for ml in ml_methods:
-                list_of_comparable_ranks_in_one_repitition[ml] = list_of_ntrue_accuracies[ml][repetition]
-                list_of_npractitioner_accuracies[repetition][ml] = list_of_npractitioner_accuracies[repetition][ml]['balanced_accuracy_score']
+        sl_match_counts = {learner.SLClass: 0 for learner in self.dg_models}
+        for repetition in range(0, n_practitioner_repititions):
+            list_of_comparable_ranks_in_one_repitition = {method.name: 0 for method in self.ml_models}
+            for ml in self.ml_models:
+                list_of_comparable_ranks_in_one_repitition[ml.name] = mean(list_of_ntrue_accuracies[ml.name])#[repetition]
+                list_of_npractitioner_accuracies[repetition][ml.name] = list_of_npractitioner_accuracies[repetition][ml.name]['balanced_accuracy_score']
             if max(list_of_npractitioner_accuracies[repetition],key=list_of_npractitioner_accuracies[repetition].get) == max(list_of_comparable_ranks_in_one_repitition,key=list_of_comparable_ranks_in_one_repitition.get):
                 matches_from_practitioner_limited_world += 1
         for sl in sl_match_counts.keys():
             sl_match_count = 0
-            for repetition in range(0, n_true_repetitions):
-                list_of_comparable_ranks_in_one_repitition = {"DecisionTreeClassifier": 0, "RandomForestClassifier": 0,"KNeighborsClassifier": 0,"GradientBoostingClassifier": 0, "SVCLinear": 0,"LogisticLASSO": 0, "MLPClassifier": 0}
-                list_of_comparable_ranks_in_one_repitition_b = {"DecisionTreeClassifier": 0,"RandomForestClassifier": 0, "KNeighborsClassifier": 0,"GradientBoostingClassifier": 0, "SVCLinear": 0,"LogisticLASSO": 0, "MLPClassifier": 0}
-                for ml in ml_methods:
-                    list_of_comparable_ranks_in_one_repitition[ml] = list_of_ntrue_accuracies[ml][repetition]
-                    list_of_comparable_ranks_in_one_repitition_b[ml] = list_of_nsl_accuracies[sl][ml][repetition]
+            for repetition in range(0, n_practitioner_repititions):
+                list_of_comparable_ranks_in_one_repitition = {method.name: 0 for method in self.ml_models}
+                list_of_comparable_ranks_in_one_repitition_b = {method.name: 0 for method in self.ml_models}
+                for ml in self.ml_models:
+                    list_of_comparable_ranks_in_one_repitition[ml.name] = mean(list_of_ntrue_accuracies[ml.name])#[repetition]
+                    list_of_comparable_ranks_in_one_repitition_b[ml.name] = list_of_nsl_accuracies[sl][ml.name][repetition]
                 if max(list_of_comparable_ranks_in_one_repitition_b,key=list_of_comparable_ranks_in_one_repitition_b.get) == max(list_of_comparable_ranks_in_one_repitition, key=list_of_comparable_ranks_in_one_repitition.get):
                     sl_match_count += 1
             sl_match_counts[sl] = sl_match_count / n_true_repetitions
-        sl_match_counts["limited-real"] = matches_from_practitioner_limited_world / n_true_repetitions
+        sl_match_counts["limited-real"] = matches_from_practitioner_limited_world / n_practitioner_repititions
         fig = plt.figure(figsize=(10, 10))
         plt.bar(list(sl_match_counts.keys()), list(sl_match_counts.values()), color='maroon', width=0.4)
         plt.xlabel("Technique")
@@ -134,41 +169,14 @@ class Postprocessing():
 
         # Create scatterplot of relative performances for every repetition for all ml methods between alternative pathways
         list_of_xy_pairs_all_methods_limited_world = []
-        mean_list_of_xy_pairs_all_methods_limited_world = []
-        dict_of_xy_pairs_sl = {"hc": [], "tabu": [], "rsmax2": [], "mmhc": [], "h2pc": [], "gs": [],"pc.stable": []}  # ,"iamb":[],"fast.iamb":[],"iamb.fdr":[]}
-        mean_dict_of_xy_pairs_sl = {"hc": [], "tabu": [], "rsmax2": [], "mmhc": [], "h2pc": [], "gs": [],"pc.stable": []}  # ,"iamb":[],"fast.iamb":[],"iamb.fdr":[]}
-        ml_methods = ["DecisionTreeClassifier", "RandomForestClassifier", "KNeighborsClassifier","GradientBoostingClassifier", "SVCLinear", "LogisticLASSO", "MLPClassifier"]
-
-        temp = []
-        mean_list_of_npractitioner_accuracies = {"DecisionTreeClassifier": 0, "RandomForestClassifier": 0, "KNeighborsClassifier": 0,"GradientBoostingClassifier": 0, "SVCLinear": 0, "LogisticLASSO": 0,"MLPClassifier": 0}
-        mean_list_of_ntrue_accuracies = {"DecisionTreeClassifier": 0, "RandomForestClassifier": 0, "KNeighborsClassifier": 0,"GradientBoostingClassifier": 0,  "SVCLinear": 0, "LogisticLASSO": 0, "MLPClassifier": 0}
-        mean_list_of_nsl_accuracies = {"hc": {"DecisionTreeClassifier": [], "RandomForestClassifier": [], "KNeighborsClassifier": [],"GradientBoostingClassifier": [], "SVCLinear": [], "LogisticLASSO": [],"MLPClassifier": []},"tabu": {"DecisionTreeClassifier": [], "RandomForestClassifier": [], "KNeighborsClassifier": [],"GradientBoostingClassifier": [], "SVCLinear": [], "LogisticLASSO": [],"MLPClassifier": []},"rsmax2": {"DecisionTreeClassifier": [], "RandomForestClassifier": [], "KNeighborsClassifier": [],"GradientBoostingClassifier": [], "SVCLinear": [], "LogisticLASSO": [],"MLPClassifier": []},"mmhc": {"DecisionTreeClassifier": [], "RandomForestClassifier": [], "KNeighborsClassifier": [],"GradientBoostingClassifier": [], "SVCLinear": [], "LogisticLASSO": [],"MLPClassifier": []},"h2pc": {"DecisionTreeClassifier": [], "RandomForestClassifier": [], "KNeighborsClassifier": [],"GradientBoostingClassifier": [],"SVCLinear": [], "LogisticLASSO": [],"MLPClassifier": []},"gs": {"DecisionTreeClassifier": [], "RandomForestClassifier": [], "KNeighborsClassifier": [],"GradientBoostingClassifier": [],  "SVCLinear": [], "LogisticLASSO": [],"MLPClassifier": []},"pc.stable": {"DecisionTreeClassifier": [], "RandomForestClassifier": [], "KNeighborsClassifier": [],"GradientBoostingClassifier": [], "SVCLinear": [], "LogisticLASSO": [],"MLPClassifier": []}}
-
-        for ml in ml_methods:
-            for repetition in range(0, n_practitioner_repititions):
-                temp.append(list_of_npractitioner_accuracies[repetition][ml])
-            mean_list_of_npractitioner_accuracies[ml] = mean(temp)
-            temp.clear()
-
-        for ml in ml_methods:
-            mean_list_of_ntrue_accuracies[ml] = mean(list_of_ntrue_accuracies[ml])
-        for sl in sl_list:
-            for ml in ml_methods:
-                mean_list_of_nsl_accuracies[sl][ml] = mean(list_of_nsl_accuracies[sl][ml])
-
-        for ml_index, ml_method_label in enumerate(ml_methods):
-            mean_list_of_xy_pairs_all_methods_limited_world.append( (mean_list_of_ntrue_accuracies[ml_method_label], mean_list_of_npractitioner_accuracies[ml_method_label]))
-        for sl in mean_dict_of_xy_pairs_sl.keys():
-            for ml_index, ml_method_label in enumerate(ml_methods):
-                mean_dict_of_xy_pairs_sl[sl].append((mean_list_of_ntrue_accuracies[ml_method_label], mean_list_of_nsl_accuracies[sl][ml_method_label]))
+        dict_of_xy_pairs_sl = {learner.SLClass: [] for learner in self.dg_models}
 
         for repetition in range(0, n_practitioner_repititions):
-            for ml_index, ml_method_label in enumerate(ml_methods):
-                list_of_xy_pairs_all_methods_limited_world.append( (mean(list_of_ntrue_accuracies[ml_method_label]), list_of_npractitioner_accuracies[repetition][ml_method_label]))
-        for sl in dict_of_xy_pairs_sl.keys():
-            for repetition in range(0, n_practitioner_repititions):
-                for ml_index, ml_method_label in enumerate(ml_methods):
-                    dict_of_xy_pairs_sl[sl].append( (mean(list_of_ntrue_accuracies[ml_method_label]),list_of_nsl_accuracies[sl][ml_method_label][repetition]))
+            for ml_index, ml_method_label in enumerate(self.ml_models):
+                list_of_xy_pairs_all_methods_limited_world.append( (mean(list_of_ntrue_accuracies[ml_method_label.name]), list_of_npractitioner_accuracies[repetition][ml_method_label.name]))
+                for sl in dict_of_xy_pairs_sl.keys():
+                    dict_of_xy_pairs_sl[sl].append((mean(list_of_ntrue_accuracies[ml_method_label.name]),list_of_nsl_accuracies[sl][ml_method_label.name][repetition]))
+
         sl_colors = {"hc": 'red', "tabu": 'blue', "rsmax2": 'green', "mmhc": 'yellow', "h2pc": 'orange', "gs": "cyan","pc.stable": "brown"}  # , "iamb": "magenta", "fast.iamb": "peru", "iamb.fdr": "pink"}
         sl_offset = {"hc": 2, "tabu": 4, "rsmax2": 6, "mmhc": 8, "h2pc": 10, "gs": 12,"pc.stable": 14}
         plt.figure(figsize=(10, 10))
@@ -178,59 +186,136 @@ class Postprocessing():
             x_true_accuracies, y_sl_accuracies = zip(*dict_of_xy_pairs_sl[sl])
             corr, _ = kendalltau(x_true_accuracies, y_sl_accuracies)
             plt.scatter(x=x_true_accuracies, y=y_sl_accuracies, c=sl_colors[sl], s=10, label=sl + ' ('+ str(round(corr,2))+')', alpha=0.7, transform=trans+offset(sl_offset[sl]))
-        plt.title("Scatterplot of x-y pairs between true and benchmarked accuracies for every repetition for all ml methods")
+        plt.title("Scatterplot of x-y pairs between true and benchmarked accuracies for every practitioner repetition for all ml methods")
         plt.xlabel("Accuracy (True Reference)")
         plt.ylabel("Accuracy (Estimated Performance)")
         x_true_accuracies, y_limited_accuracies = zip(*list_of_xy_pairs_all_methods_limited_world)
         corr, _ = kendalltau(x_true_accuracies, y_limited_accuracies)
         plt.scatter(x=x_true_accuracies, y=y_limited_accuracies, c='black', label='limited-real ('+str(round(corr,2))+')', s=15,marker='x', alpha=1)
+        for ml_index, ml_method_label in enumerate(self.ml_models):
+            plt.axvline(x=x_true_accuracies[ml_index], ls='--', c='lightgrey', alpha=0.7)
+        plt.plot([0, 1], [0, 1], transform=plt.gca().transAxes, ls="--", c="grey", alpha=0.4)
         plt.legend(loc='upper left')
-        for sl in mean_dict_of_xy_pairs_sl.keys():
-            sorted_result = sorted(mean_dict_of_xy_pairs_sl[sl])
-            mean_x_true_accuracies, mean_y_sl_accuracies = zip(*sorted_result)
-            plt.plot(mean_x_true_accuracies, mean_y_sl_accuracies, color=sl_colors[sl], linestyle='dashed',linewidth=0.3)
-        plt.style.use("seaborn")
-        sorted_result = sorted(mean_list_of_xy_pairs_all_methods_limited_world)
-        mean_x_true_accuracies, mean_y_limited_accuracies = zip(*sorted_result)
 
-        rank_methods = {'DecisionTreeClassifier': 0, 'RandomForestClassifier': 0, 'KNeighborsClassifier': 0,'GradientBoostingClassifier': 0, 'SVCLinear': 0, 'LogisticLASSO': 0, 'MLPClassifier': 0}
-        for idx, item in enumerate(ml_methods):
-            rank_methods[item] = mean_list_of_xy_pairs_all_methods_limited_world[idx][0]
-        rank_methods = sorted(rank_methods.items(), key=lambda kv: (kv[1], kv[0]))
-        ordered_list_of_methods = []
-        for item in rank_methods:
-            ordered_list_of_methods.append(item[0]) #grab the true rank performance, [1] would retreive limited performance
-        for ml_index, ml_method_label in enumerate(ml_methods):
-            plt.text(x=x_true_accuracies[ml_index], y=y_limited_accuracies[ml_index], s=ml_method_label, fontsize=8,horizontalalignment='center', verticalalignment='bottom', alpha=0.8)
-        plt.tight_layout()
-        plt.savefig(os.getcwd() + figuredirname + 'interworld_benchmarks_scatterplot_every_repetition_accuracies_all_methods.png')
-        plt.show()
+        #for sl in dict_of_xy_pairs_sl.keys():
+        #    sorted_result = sorted(dict_of_xy_pairs_sl[sl])
+        #    mean_x_true_accuracies, mean_y_sl_accuracies = zip(*sorted_result)
+        #    plt.plot(mean_x_true_accuracies, mean_y_sl_accuracies, color=sl_colors[sl], linestyle='dashed',linewidth=0.3)
+        #plt.style.use("seaborn")
+
+        #sorted_result = sorted(mean_list_of_xy_pairs_all_methods_limited_world)
+        #mean_x_true_accuracies, mean_y_limited_accuracies = zip(*sorted_result)
 
         # Boxplot calculation and saving
-        performances = pd.DataFrame(columns=['est-true', 'est-to-avgml', 'ML_method', 'SL'])
-        for practitioner_rep in range(0, len(list_of_npractitioner_accuracies)):
+        practitioner_differences_var = pd.DataFrame(columns=['est-var', 'ML_method', 'SL'])
+        practitioner_differences_std = pd.DataFrame(columns=['est-std', 'ML_method', 'SL'])
+        sl_differences_var = pd.DataFrame(columns=['est-var', 'ML_method', 'SL'])
+        sl_differences_std = pd.DataFrame(columns=['est-std', 'ML_method', 'SL'])
+
+        ml_method_performance_list = {method.name: [] for method in self.ml_models}
+        for ml in self.ml_models:
+            for practitioner_rep in range(0, n_practitioner_repititions):
+                ml_method_performance_list[ml.name].append(list_of_npractitioner_accuracies[practitioner_rep][ml.name])
+            practitioner_differences_var = practitioner_differences_var.append({'est-var': np.var(ml_method_performance_list[ml.name]),'ML_method': ml.name,'SL': 'limited-real'}, ignore_index=True)
+            practitioner_differences_std = practitioner_differences_std.append({'est-std': np.std(ml_method_performance_list[ml.name]), 'ML_method': ml.name, 'SL': 'limited-real'},ignore_index=True)
+
+        for ml in self.ml_models:
+            for sl in self.dg_models:
+                sl_ml_method_performance_list = {method.name: [] for method in self.ml_models}
+                for practitioner_rep in range(0, n_practitioner_repititions):
+                    sl_ml_method_performance_list[ml.name].append(list_of_nsl_accuracies[sl.SLClass][ml.name][practitioner_rep])
+                sl_differences_var = sl_differences_var.append({'est-var': np.var(sl_ml_method_performance_list[ml.name]),'ML_method': ml.name,'SL': sl.SLClass}, ignore_index=True)
+                sl_differences_std = sl_differences_std.append({'est-std': np.std(sl_ml_method_performance_list[ml.name]),'ML_method': ml.name, 'SL': sl.SLClass}, ignore_index=True)
+
+        plt.figure(figsize=(10, 10))
+        ax = sns.boxplot(y=practitioner_differences_var['est-var'])#x=practitioner_differences['ML_method'], y=practitioner_differences['est-var'])#,hue=practitioner_differences['SL'])
+        plt.title('Boxplot of variance across ML method performances between limited real-world practitioners')
+        plt.ylabel('Variance across ML method performances')
+        #plt.xlabel('ML Method')
+        #ax.set_xticklabels(ml_labels, rotation=90)
+        plt.tight_layout()
+        plt.savefig(os.getcwd() + figuredirname + 'interworld_benchmarks_boxplot_all_ml_methods_practitioner_var.png')
+        plt.show()
+
+        plt.figure(figsize=(10, 10))
+        ax = sns.boxplot(x=sl_differences_var['SL'], y=sl_differences_var['est-var'])#x=sl_differences['ML_method'], y=sl_differences['est-var'],hue=sl_differences['SL'])
+        plt.title('Boxplot of variance across ML method performances between learners')
+        plt.ylabel('Variance across ML method performances')
+        plt.xlabel('Learner')
+        #ax.set_xticklabels(ml_labels, rotation=90)
+        plt.tight_layout()
+        plt.savefig(os.getcwd() + figuredirname + 'interworld_benchmarks_boxplot_all_ml_methods_learner_var.png')
+        plt.show()
+
+        plt.figure(figsize=(10, 10))
+        ax = sns.boxplot(y=practitioner_differences_std['est-std'])#ax = sns.boxplot(x=practitioner_differences['ML_method'], y=practitioner_differences['est-std'],hue=practitioner_differences['SL'])
+        plt.title('Boxplot of standard deviation across ML method performances between limited real-world practitioners')
+        plt.ylabel('Standard deviation across ML method performances')
+        #plt.xlabel('ML Method')
+        #ax.set_xticklabels(ml_labels, rotation=90)
+        plt.tight_layout()
+        plt.savefig(os.getcwd() + figuredirname + 'interworld_benchmarks_boxplot_all_ml_methods_practitioner_std.png')
+        plt.show()
+
+        plt.figure(figsize=(10, 10))
+        ax = sns.boxplot(x=sl_differences_std['SL'], y=sl_differences_std['est-std'])#ax = sns.boxplot(x=sl_differences['ML_method'], y=sl_differences['est-std'],hue=sl_differences['SL'])
+        plt.title('Boxplot of standard deviation across ML method performances between learners')
+        plt.ylabel('Standard deviation across ML method performances')
+        plt.xlabel('Learner')
+        #ax.set_xticklabels(ml_labels, rotation=90)
+        plt.tight_layout()
+        plt.savefig(os.getcwd() + figuredirname + 'interworld_benchmarks_boxplot_all_ml_methods_learner_std.png')
+        plt.show()
+
+        performances = pd.DataFrame(columns=['est','est-true', 'est-to-avgml', 'ML_method', 'SL'])
+        for practitioner_rep in range(0, n_practitioner_repititions):
             ml_method_performance_list = []
             practitioner_rep_ml_methods = list_of_npractitioner_accuracies[practitioner_rep]
             for item in practitioner_rep_ml_methods.values(): ml_method_performance_list.append(item)
             avg_ml_rep_performance = mean(ml_method_performance_list)
-            for ml in ml_methods:
-                true_rep_ml_performance = list_of_ntrue_accuracies[ml][practitioner_rep]
+            for ml in self.ml_models:
+                true_rep_ml_performance = mean(list_of_ntrue_accuracies[ml.name])#[practitioner_rep]
                 performances = performances.append(
-                    {'est-true': (practitioner_rep_ml_methods[ml] - true_rep_ml_performance),
-                     'est-to-avgml': practitioner_rep_ml_methods[ml] - avg_ml_rep_performance, 'ML_method': ml,
+                    {'est': practitioner_rep_ml_methods[ml.name],
+                        'est-true': (practitioner_rep_ml_methods[ml.name] - true_rep_ml_performance),
+                     'est-to-avgml': practitioner_rep_ml_methods[ml.name] - avg_ml_rep_performance, 'ML_method': ml.name,
                      'SL': 'limited-real'}, ignore_index=True)
-        for sl in sl_list:
-            for ml in ml_methods:
-                for sl_rep in range(0, n_sl_repititions):
+        for sl in self.dg_models:
+            for ml in self.ml_models:
+                for sl_rep in range(0, n_practitioner_repititions):
                     temp = []
-                    for ml_avg in ml_methods:
-                        temp.append(list_of_nsl_accuracies[sl][ml_avg][sl_rep])
+                    for ml_avg in self.ml_models:
+                        temp.append(list_of_nsl_accuracies[sl.SLClass][ml_avg.name][sl_rep])
                     avg_ml_rep_performance = mean(temp)
-                    sl_rep_ml_performance = list_of_nsl_accuracies[sl][ml][sl_rep]
-                    true_rep_ml_performance = list_of_ntrue_accuracies[ml][sl_rep]
-                    performances = performances.append({'est-true': (sl_rep_ml_performance - true_rep_ml_performance),
+                    sl_rep_ml_performance = list_of_nsl_accuracies[sl.SLClass][ml.name][sl_rep]
+                    true_rep_ml_performance = mean(list_of_ntrue_accuracies[ml.name])#[sl_rep]
+                    performances = performances.append({'est': sl_rep_ml_performance,
+                                                        'est-true': (sl_rep_ml_performance - true_rep_ml_performance),
                                                         'est-to-avgml': (sl_rep_ml_performance - avg_ml_rep_performance),
-                                                        'ML_method': ml, 'SL': sl}, ignore_index=True)
+                                                        'ML_method': ml.name, 'SL': sl.SLClass}, ignore_index=True)
+        rank_methods = {method.name: 0 for method in self.ml_models}
+        for idx, item in enumerate(self.ml_models):
+            rank_methods[item.name] = list_of_xy_pairs_all_methods_limited_world[idx][0]
+        rank_methods = sorted(rank_methods.items(), key=lambda kv: (kv[1], kv[0]))
+        ordered_list_of_methods = []
+        for item in rank_methods:
+            ordered_list_of_methods.append(item[0])  # retrieve the true rank performance, [1] would retrieve limited performance
+        for ml_index, ml_method_label in enumerate(self.ml_models):
+            plt.text(x=x_true_accuracies[ml_index], y=y_limited_accuracies[ml_index], s=ml_method_label.name,fontsize=8, horizontalalignment='center', verticalalignment='bottom', alpha=0.8)
+        plt.tight_layout()
+        plt.savefig(os.getcwd() + figuredirname + 'interworld_benchmarks_scatterplot_every_practitioner_repetition_accuracies_all_methods.png')
+        plt.show()
+
+        plt.figure(figsize=(10, 10))
+        ax = sns.boxplot(x=performances['ML_method'], y=performances['est-true'], hue=performances['SL'],showfliers=False)
+        plt.title('Boxplot of difference between estimated performances and true by ml method for strategies')
+        plt.ylabel('Difference to True estimated performance')
+        plt.xlabel('ML Method')
+        ax.set_xticklabels(ml_labels, rotation=90)
+        plt.tight_layout()
+        plt.savefig(os.getcwd() + figuredirname + 'interworld_benchmarks_boxplot_all_ml_methods_diff_to_true.png')
+        plt.show()
+
         plt.figure(figsize=(10, 10))
         ax = sns.boxplot(x=performances['ML_method'], y=performances['est-true'], hue=performances['SL'],showfliers=False, order=ordered_list_of_methods)
         plt.title('Boxplot of difference between estimated performances and true by ml method for strategies')
@@ -242,12 +327,21 @@ class Postprocessing():
             ax.get_xticklabels()
         ax.set_xticklabels(added_methods, rotation=90)
         plt.tight_layout()
-        plt.savefig(os.getcwd() + figuredirname + 'interworld_benchmarks_boxplot_all_ml_methods_diff_to_true.png')
+        plt.savefig(os.getcwd() + figuredirname + 'interworld_benchmarks_boxplot_all_ml_methods_diff_to_true_xaxis_ordered.png')
         plt.show()
 
         plt.figure(figsize=(10, 10))
-        ax = sns.boxplot(x=performances['ML_method'], y=performances['est-to-avgml'], hue=performances['SL'],
-                         showfliers=False)
+        ax = sns.boxplot(x=performances['ML_method'], y=performances['est-to-avgml'], hue=performances['SL'],showfliers=False)
+        plt.title('Boxplot of difference between estimated and avg ml performances by ml method for strategies')
+        plt.ylabel('Difference to Avg ML performance')
+        plt.xlabel('ML Method')
+        ax.set_xticklabels(ml_labels, rotation=90)
+        plt.tight_layout()
+        plt.savefig(os.getcwd() + figuredirname + 'interworld_benchmarks_boxplot_all_ml_methods_diff_to_avg_ml_performance.png')
+        plt.show()
+
+        plt.figure(figsize=(10, 10))
+        ax = sns.boxplot(x=performances['ML_method'], y=performances['est-to-avgml'], hue=performances['SL'],showfliers=False, order=ordered_list_of_methods)
         plt.title('Boxplot of difference between estimated and avg ml performances by ml method for strategies')
         plt.ylabel('Difference to Avg ML performance')
         plt.xlabel('ML Method (least performing to best)')
@@ -257,45 +351,55 @@ class Postprocessing():
             ax.get_xticklabels()
         ax.set_xticklabels(added_methods, rotation=90)
         plt.tight_layout()
-        plt.savefig(os.getcwd() + figuredirname + 'interworld_benchmarks_boxplot_all_ml_methods_diff_to_avg_ml_performance.png')
+        plt.savefig(os.getcwd() + figuredirname + 'interworld_benchmarks_boxplot_all_ml_methods_diff_to_avg_ml_performance_xaxis_ordered.png')
         plt.show()
 
+        for ml in self.ml_models:
+            ml_method_filtered_performance = performances[performances['ML_method'] == ml.name]
+            plt.figure(figsize=(10, 10))
+            sns.kdeplot(x=ml_method_filtered_performance['est'], hue=ml_method_filtered_performance['SL'],fill=True, common_norm=False, alpha=0.5, clip=(0.0, 1.0))
+            plt.title('Distribution of ' + ml.name + ' performances grouped by alternative strategies')
+            plt.xlabel("Performance")
+            plt.ylabel("Density")
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig(os.getcwd() + figuredirname + 'interworld_benchmarks_kdeplot_performance_'+ml.name+'by_sl.png')
+            plt.show()
+
+        violin_header = [method.name for method in self.ml_models]
+        violin_header.append("SL")
         # Save csv of performances for every repetition for all ml methods for all alternative pathways
-        csv_performances = pd.DataFrame(columns=["DecisionTreeClassifier", "RandomForestClassifier", "KNeighborsClassifier","GradientBoostingClassifier", "SVCLinear", "LogisticLASSO", "MLPClassifier", "SL"])
-        ranked_csv_performances = pd.DataFrame(columns=["DecisionTreeClassifier", "RandomForestClassifier", "KNeighborsClassifier","GradientBoostingClassifier", "SVCLinear", "LogisticLASSO", "MLPClassifier", "SL"])
-        violinplot_performances = pd.DataFrame({'ML_Method': pd.Series(dtype='str'),
-                   'rank': pd.Series(dtype='int'),
-                   'SL': pd.Series(dtype='str')})
-        for practitioner_rep in range(0, len(list_of_npractitioner_accuracies)):
+        csv_performances = pd.DataFrame(columns=violin_header)
+        ranked_csv_performances = pd.DataFrame(columns=violin_header)
+        violinplot_performances = pd.DataFrame({'ML_Method': pd.Series(dtype='str'),'rank': pd.Series(dtype='int'),'SL': pd.Series(dtype='str')})
+        for practitioner_rep in range(0, n_practitioner_repititions):
             practitioner_rep_ml_methods = list_of_npractitioner_accuracies[practitioner_rep]
-            csv_performances = csv_performances.append({'DecisionTreeClassifier': practitioner_rep_ml_methods["DecisionTreeClassifier"], 'RandomForestClassifier': practitioner_rep_ml_methods["RandomForestClassifier"], 'KNeighborsClassifier': practitioner_rep_ml_methods["KNeighborsClassifier"], 'GradientBoostingClassifier': practitioner_rep_ml_methods["GradientBoostingClassifier"], 'SVCLinear': practitioner_rep_ml_methods["SVCLinear"], 'LogisticLASSO': practitioner_rep_ml_methods["LogisticLASSO"],'MLPClassifier': practitioner_rep_ml_methods["MLPClassifier"]}, ignore_index=True)
-            #csv_performances.to_csv('limited-real_performance_per_repetition.csv')
+            csv_performances = csv_performances.append({method.name: practitioner_rep_ml_methods[method.name] for method in self.ml_models}, ignore_index=True)
             ranked_performances = pd.DataFrame.from_dict([dict(zip(practitioner_rep_ml_methods.keys(), rankdata([-i for i in practitioner_rep_ml_methods.values()], method='min')))], dtype=int64)
             ranked_performances["SL"] = "limited-real"
             ranked_csv_performances = ranked_csv_performances.append(ranked_performances)
-            for ml in ml_methods:
-                violinplot_performances = violinplot_performances.append({'ML_Method':ml, 'rank': ranked_performances[ml].loc[0], "SL":'limited-real'}, ignore_index=True)
+            for ml in self.ml_models:
+                violinplot_performances = violinplot_performances.append({'ML_Method':ml.name, 'rank': ranked_performances[ml.name].loc[0], "SL":'limited-real'}, ignore_index=True)
             #ranked_csv_performances.to_csv('limited-real_rank-performance_per_repetition.csv')
-        for sl in sl_list:
-            csv_performances = pd.DataFrame(columns=["DecisionTreeClassifier", "RandomForestClassifier", "KNeighborsClassifier","GradientBoostingClassifier", "SVCLinear", "LogisticLASSO", "MLPClassifier"])
-            ranked_csv_performances = pd.DataFrame(columns=["DecisionTreeClassifier", "RandomForestClassifier", "KNeighborsClassifier","GradientBoostingClassifier", "SVCLinear", "LogisticLASSO", "MLPClassifier"])
-            for sl_rep in range(0, n_sl_repititions):
-                sl_accuracies = {"DecisionTreeClassifier": 0, "RandomForestClassifier": 0,"KNeighborsClassifier": 0, "GradientBoostingClassifier": 0,"SVCLinear": 0, "LogisticLASSO": 0, "MLPClassifier": 0}
-                for ml in ml_methods:
-                    sl_accuracies[ml] = list_of_nsl_accuracies[sl][ml][sl_rep]
-                csv_performances = csv_performances.append({'DecisionTreeClassifier': list_of_nsl_accuracies[sl]["DecisionTreeClassifier"][sl_rep],'RandomForestClassifier': list_of_nsl_accuracies[sl]["RandomForestClassifier"][sl_rep],'KNeighborsClassifier': list_of_nsl_accuracies[sl]["KNeighborsClassifier"][sl_rep],'GradientBoostingClassifier': list_of_nsl_accuracies[sl]["GradientBoostingClassifier"][sl_rep],'SVCLinear': list_of_nsl_accuracies[sl]["SVCLinear"][sl_rep],'LogisticLASSO': list_of_nsl_accuracies[sl]["LogisticLASSO"][sl_rep],'MLPClassifier': list_of_nsl_accuracies[sl]["MLPClassifier"][sl_rep]}, ignore_index=True)
-                #csv_performances.to_csv(sl+'_performance_per_repetition.csv')
+        for sl in self.dg_models:
+            csv_performances = pd.DataFrame(columns=self.ml_models)
+            ranked_csv_performances = pd.DataFrame(columns=self.ml_models)
+            for sl_rep in range(0, n_practitioner_repititions):
+                sl_accuracies = {method.name: 0 for method in self.ml_models}
+                for ml in self.ml_models:
+                    sl_accuracies[ml.name] = list_of_nsl_accuracies[sl.SLClass][ml.name][sl_rep]
+                csv_performances = csv_performances.append({method.name: list_of_nsl_accuracies[sl.SLClass][method.name][sl_rep] for method in self.ml_models}, ignore_index=True)
                 ranked_performances = pd.DataFrame.from_dict([dict(zip(sl_accuracies.keys(),rankdata([-i for i in sl_accuracies.values()],method='min')))],dtype=int64)
-                ranked_performances["SL"] = sl
+                ranked_performances["SL"] = sl.SLClass
                 ranked_csv_performances = ranked_csv_performances.append(ranked_performances)
-                for ml in ml_methods:
-                    violinplot_performances = violinplot_performances.append({'ML_Method': ml, 'rank': ranked_performances[ml].loc[0], "SL": sl}, ignore_index=True)
+                for ml in self.ml_models:
+                    violinplot_performances = violinplot_performances.append({'ML_Method': ml.name, 'rank': ranked_performances[ml.name].loc[0], "SL": sl.SLClass}, ignore_index=True)
                 #ranked_csv_performances.to_csv(sl+'_rank-performance_per_repetition.csv')
-        for ml in ml_methods:
-            list_of_ntrue_accuracies[ml] = mean(list_of_ntrue_accuracies[ml])
-        for sl in sl_list:
-            for ml in ml_methods:
-                list_of_nsl_accuracies[sl][ml] = mean(list_of_nsl_accuracies[sl][ml])
+        #for ml in self.ml_models:
+        #    list_of_ntrue_accuracies[ml.name] = mean(list_of_ntrue_accuracies[ml.name])
+        #for sl in self.dg_models:
+        #    for ml in self.ml_models:
+        #        list_of_nsl_accuracies[sl.SLClass][ml.name] = mean(list_of_nsl_accuracies[sl.SLClass][ml.name])
 
         # Create violinplot of rank spread by ml method grouped by sl
         plt.figure(figsize=(10, 10))
@@ -320,39 +424,43 @@ class Postprocessing():
         plt.show()
 
         # Create scatterplot of relative avg performances for all ml methods between alternative pathways
-        list_of_xy_pairs_all_methods_limited_world = []
-        dict_of_xy_pairs_sl = {"hc": [], "tabu": [], "rsmax2": [], "mmhc": [], "h2pc": [],"gs":[], "pc.stable":[]}#,"iamb":[],"fast.iamb":[],"iamb.fdr":[]}
-        ml_methods = ["DecisionTreeClassifier","RandomForestClassifier","KNeighborsClassifier","GradientBoostingClassifier", "SVCLinear", "LogisticLASSO", "MLPClassifier"]
-        avg_nlearning = {"DecisionTreeClassifier":0,"RandomForestClassifier":0,"KNeighborsClassifier":0,"GradientBoostingClassifier":0, "SVCLinear":0, "LogisticLASSO":0, "MLPClassifier":0}
-        plt.figure(figsize=(10, 10))
-        temp = []
-        for ml in ml_methods:
-            for repetition in range(0, n_practitioner_repititions):
-                temp.append(list_of_npractitioner_accuracies[repetition][ml])
-            avg_nlearning[ml] = mean(temp)
-            temp.clear()
-        for ml_index, ml_method_label in enumerate(ml_methods):
-            list_of_xy_pairs_all_methods_limited_world.append( (list_of_ntrue_accuracies[ml_method_label],avg_nlearning[ml_method_label]))
-        for sl in dict_of_xy_pairs_sl.keys():
-           for ml_index, ml_method_label in enumerate(ml_methods):
-               dict_of_xy_pairs_sl[sl].append( (list_of_ntrue_accuracies[ml_method_label],list_of_nsl_accuracies[sl][ml_method_label]))
-        sl_colors = {"hc": 'red',"tabu": 'blue', "rsmax2": 'green', "mmhc": 'yellow',"h2pc": 'orange', "gs": "cyan", "pc.stable": "brown"}#, "iamb": "magenta", "fast.iamb": "peru", "iamb.fdr": "pink"}
-        for sl in dict_of_xy_pairs_sl.keys():
-           x_true_accuracies, y_sl_accuracies = zip(*dict_of_xy_pairs_sl[sl])
-           plt.scatter(x=x_true_accuracies, y=y_sl_accuracies, c=sl_colors[sl], label=sl, alpha=0.7)
-        plt.title("Scatterplot of x-y pairs between true and benchmarked avg accuracies for all ml methods")
-        plt.xlabel("Accuracy (True Reference)")
-        plt.ylabel("Accuracy (Estimated Performance)")
-        x_true_accuracies, y_sl_accuracies = zip(*list_of_xy_pairs_all_methods_limited_world)
+        #list_of_xy_pairs_all_methods_limited_world = []
+        #dict_of_xy_pairs_sl = {learner.SLClass: [] for learner in self.dg_models}
+
+        #ml_methods = ["DecisionTreeClassifier","RandomForestClassifier","KNeighborsClassifier","GradientBoostingClassifier", "SVCLinear", "LogisticLASSO", "MLPClassifier"]
+
+        #avg_nlearning = {method.name: 0 for method in self.ml_models}
+        #plt.figure(figsize=(10, 10))
+        #temp = []
+        #for ml in self.ml_models:
+        #    for repetition in range(0, n_practitioner_repititions):
+        #        temp.append(list_of_npractitioner_accuracies[repetition][ml.name])
+        #    avg_nlearning[ml.name] = mean(temp)
+        #    temp.clear()
+        #for ml_index, ml_method_label in enumerate(self.ml_models):
+        #    list_of_xy_pairs_all_methods_limited_world.append( (list_of_ntrue_accuracies[ml_method_label.name],avg_nlearning[ml_method_label.name]))
+        #for sl in dict_of_xy_pairs_sl.keys():
+        #   for ml_index, ml_method_label in enumerate(self.ml_models):
+        #       dict_of_xy_pairs_sl[sl].append( (list_of_ntrue_accuracies[ml_method_label.name],list_of_nsl_accuracies[sl][ml_method_label.name]))
+        #sl_colors = {"hc": 'red',"tabu": 'blue', "rsmax2": 'green', "mmhc": 'yellow',"h2pc": 'orange', "gs": "cyan", "pc.stable": "brown"}#, "iamb": "magenta", "fast.iamb": "peru", "iamb.fdr": "pink"}
+        #for sl in dict_of_xy_pairs_sl.keys():
+        #   x_true_accuracies, y_sl_accuracies = zip(*dict_of_xy_pairs_sl[sl])
+        #   plt.scatter(x=x_true_accuracies, y=y_sl_accuracies, c=sl_colors[sl], label=sl, alpha=0.7)
+        #plt.title("Scatterplot of x-y pairs between true and benchmarked avg accuracies for all ml methods")
+        #plt.xlabel("Accuracy (True Reference)")
+        #plt.ylabel("Accuracy (Estimated Performance)")
+        #x_true_accuracies, y_sl_accuracies = zip(*list_of_xy_pairs_all_methods_limited_world)
+
         #plt.scatter(x=x_true_accuracies, y=y_sl_accuracies, c='black', label='limited-real', marker='x', alpha=1)
-        for ml_index, ml_method_label in enumerate(ml_methods):
-            plt.axvline(x=x_true_accuracies[ml_index], color='black', ls='--', lw=0.3)
-            plt.text(x=x_true_accuracies[ml_index], y=y_sl_accuracies[ml_index], s=ml_method_label, fontsize=8, horizontalalignment='center',verticalalignment='bottom', alpha=0.8)
-        plt.legend(loc='upper left')
-        plt.style.use("seaborn")
-        plt.tight_layout()
-        plt.savefig(os.getcwd() + figuredirname + 'interworld_benchmarks_scatterplot_avg_accuracies_all_methods.png')
-        plt.show()
+
+        #for ml_index, ml_method_label in enumerate(self.ml_models):
+        #    plt.axvline(x=x_true_accuracies[ml_index], color='black', ls='--', lw=0.3)
+        #    plt.text(x=x_true_accuracies[ml_index], y=y_sl_accuracies[ml_index], s=ml_method_label.name, fontsize=8, horizontalalignment='center',verticalalignment='bottom', alpha=0.8)
+        #plt.legend(loc='upper left')
+        #plt.style.use("seaborn")
+        #plt.tight_layout()
+        #plt.savefig(os.getcwd() + figuredirname + 'interworld_benchmarks_scatterplot_avg_accuracies_all_methods.png')
+        #plt.show()
 
     def dict_to_list(self, score_name, all_results: dict):
         data = []
