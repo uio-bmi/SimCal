@@ -10,7 +10,6 @@ from sklearn.gaussian_process import GaussianProcessClassifier
 import warnings
 import time
 from sklearn.tree import DecisionTreeClassifier
-from dg_models.BnlearnLearner import Bnlearner
 from ml_models.SklearnModel import SklearnModel
 from Evaluator import Evaluator
 from utils.Win95_Dag import *
@@ -39,7 +38,7 @@ starttime = time.time()
 # ds_model = get_asia()
 # ds_model = get_printer()
 ########################################################################################################################
-ds_model = get_andes()
+ds_model = get_printer()
 
 ########################################################################################################################
 # Machine Learning configuration, select and specialise the algorithm used  a custom network or import an existing network (www.bnlearn.com/bnrepository/)
@@ -67,10 +66,10 @@ list_sklearn.append(SklearnModel("DecisionTreeClassifier_gini", DecisionTreeClas
 list_sklearn.append(SklearnModel("DecisionTreeClassifier_entropy", DecisionTreeClassifier, criterion="entropy"))
 
 # Structural Learner configuration
-structural_learner_list = [Bnlearner(name="hc", SLClass="hc"), Bnlearner(name="tabu", SLClass="tabu"), Bnlearner(name="rsmax2", SLClass="rsmax2"), Bnlearner(name="mmhc", SLClass="mmhc"), Bnlearner(name="h2pc", SLClass="h2pc"), Bnlearner(name="gs", SLClass="gs"), Bnlearner(name="pc.stable", SLClass="pc.stable")] #, NotearsLearner(name="notears_linear", SLClass="notears_linear", loss_type='logistic', lambda1=0.01), Bnlearner(name="iamb", SLClass="iamb"), Bnlearner(name="fast.iamb", SLClass="fast.iamb"),Bnlearner(name="iamb.fdr", SLClass="iamb.fdr")]
+structural_learner_list = []#Bnlearner(name="hc", SLClass="hc"), Bnlearner(name="tabu", SLClass="tabu"), Bnlearner(name="rsmax2", SLClass="rsmax2"), Bnlearner(name="mmhc", SLClass="mmhc"), Bnlearner(name="h2pc", SLClass="h2pc"), Bnlearner(name="gs", SLClass="gs"), Bnlearner(name="pc.stable", SLClass="pc.stable")] #, NotearsLearner(name="notears_linear", SLClass="notears_linear", loss_type='logistic', lambda1=0.01), Bnlearner(name="iamb", SLClass="iamb"), Bnlearner(name="fast.iamb", SLClass="fast.iamb"),Bnlearner(name="iamb.fdr", SLClass="iamb.fdr")]
 
-def scorer1(predicted, true):
-    return np.random.normal(0.5, 0.1)
+def scorer(y_pred, y_true):
+    return np.random.normal(0.7, 0.1)
 
 
 evaluator = Evaluator(ml_models=list_sklearn, dg_models=structural_learner_list, real_models=[ds_model],
@@ -78,8 +77,9 @@ evaluator = Evaluator(ml_models=list_sklearn, dg_models=structural_learner_list,
 pp = Postprocessing()
 
 # Provide the Bayesian network, train/test splits, and repetitions at different parts of the meta-simulation
-interworld_benchmarks = evaluator.meta_simulate(ds_model, n_learning=0, n_train=200,n_test=200, n_true_repetitions=1000, n_practitioner_repititions=30, n_sl_repititions=500)
+interworld_benchmarks = evaluator.meta_simulate(ds_model, n_learning=0, n_train=200,n_test=200, n_true_repetitions=100, n_practitioner_repititions=30, n_sl_repititions=500)
 pp.meta_simulation_visualise(interworld_benchmarks)
 
 endtime = time.time()
 print("Time taken: ", endtime - starttime)
+

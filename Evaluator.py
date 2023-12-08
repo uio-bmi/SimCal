@@ -84,9 +84,8 @@ class Evaluator:
         list_of_ntrue_accuracies = {method.name: [] for method in self.ml_models}
         list_of_npractitioner_accuracies = {method.name: [] for method in self.ml_models}
         list_of_nsl_accuracies = {learner.SLClass: {method.name: [] for method in self.ml_models} for learner in self.dg_models}
-        dg_metrics, _, _ = self._get_performance_by_repetition(dg_model_real, n_train + n_test,0.5, n_true_repetitions)
-        limited_dg_metrics, train_data_list, test_data_list = (
-            self._get_performance_by_repetition_return_data(dg_model_real, n_train + n_test,0.5, n_practitioner_repititions))
+        dg_metrics, _, _ = self._get_performance_by_repetition_return_data(dg_model_real, n_train + n_test,0.5, n_true_repetitions)
+        limited_dg_metrics, train_data_list, test_data_list = self._get_performance_by_repetition_return_data(dg_model_real, n_train + n_test,0.5, n_practitioner_repititions)
         for ml in dg_metrics: # extract balanced_accuracy_score organisation
             list_of_ntrue_accuracies[ml] = dg_metrics[ml]['balanced_accuracy_score']
             list_of_npractitioner_accuracies[ml] = limited_dg_metrics[ml]['balanced_accuracy_score']
@@ -315,12 +314,12 @@ class Evaluator:
         return metrics, learning_data, test_data
 
     def _get_performance_by_repetition(self, dg_model: DGModel, n_samples_real: int, tr_frac: float, n_reps: int,test_data=None):
+        assert test_data is None
         all_scores = {ml_model.name: {score.__name__: [] for score in self.scores} for ml_model in self.ml_models}
         train_data = None
         for rep in range(n_reps):
             train_data = dg_model.generate(int(n_samples_real * tr_frac), self.outcome_name)
-            if test_data is None:
-                test_data = dg_model.generate(int(n_samples_real * (1 - tr_frac)), self.outcome_name)
+            test_data = dg_model.generate(int(n_samples_real * (1 - tr_frac)), self.outcome_name)
             for ml_model in self.ml_models:
                 scores = self._develop_ml_model(ml_model, train_data, test_data)
                 for score_name in scores.keys():
@@ -335,9 +334,8 @@ class Evaluator:
         for rep in range(n_reps):
             train_data = dg_model.generate(int(n_samples_real * tr_frac), self.outcome_name)
             train_data_list.append(train_data)
-            if test_data is None:
-                test_data = dg_model.generate(int(n_samples_real * (1 - tr_frac)), self.outcome_name)
-                test_data_list.append(test_data)
+            test_data = dg_model.generate(int(n_samples_real * (1 - tr_frac)), self.outcome_name)
+            test_data_list.append(test_data)
             for ml_model in self.ml_models:
                 scores = self._develop_ml_model(ml_model, train_data, test_data)
                 for score_name in scores.keys():
