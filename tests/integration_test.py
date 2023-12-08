@@ -25,20 +25,7 @@ import numpy as np
 warnings.simplefilter(action='ignore', category=FutureWarning)
 starttime = time.time()
 
-########################################################################################################################
-# To run a meta-simulation in SimCal, the user needs to specify three elements
-#
-# 1) Configure the ground truth DAG of the real-world, specifying the structure and parameters of the Bayesian Network
-# 2) Configure the Machine Learning Estimators used for benchmarking and their hyper-parameters
-# 3) Configure the Structural Learners used to learn the underlying distribution (i.e., estimate DAGs) from limited data
-########################################################################################################################
 
-########################################################################################################################
-# Bayesian Network configuration, specify a custom network or import an existing network (www.bnlearn.com/bnrepository/)
-# For example:
-# ds_model = get_asia()
-# ds_model = get_printer()
-########################################################################################################################
 ds_model = get_andes()
 
 ########################################################################################################################

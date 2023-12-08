@@ -85,7 +85,8 @@ class Evaluator:
         list_of_npractitioner_accuracies = {method.name: [] for method in self.ml_models}
         list_of_nsl_accuracies = {learner.SLClass: {method.name: [] for method in self.ml_models} for learner in self.dg_models}
         dg_metrics, _, _ = self._get_performance_by_repetition(dg_model_real, n_train + n_test,0.5, n_true_repetitions)
-        limited_dg_metrics, train_data_list, test_data_list = self._get_performance_by_repetition_return_data(dg_model_real, n_train + n_test,0.5, n_practitioner_repititions)
+        limited_dg_metrics, train_data_list, test_data_list = (
+            self._get_performance_by_repetition_return_data(dg_model_real, n_train + n_test,0.5, n_practitioner_repititions))
         for ml in dg_metrics: # extract balanced_accuracy_score organisation
             list_of_ntrue_accuracies[ml] = dg_metrics[ml]['balanced_accuracy_score']
             list_of_npractitioner_accuracies[ml] = limited_dg_metrics[ml]['balanced_accuracy_score']
