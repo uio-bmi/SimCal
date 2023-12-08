@@ -17,7 +17,9 @@ from rpy2.robjects.vectors import DataFrame, StrVector
 from rpy2.robjects.packages import importr
 pandas2ri.activate()
 
-# This class provides high-level data-generation and ML benchmarking functions for a user-specified world with parameters
+########################################################################################################################
+# This class provides the functionality to evaluate Machine Learning benchmarking tasks
+########################################################################################################################
 class Evaluator:
     def __init__(self, ml_models: List[MachineLearner], dg_models: List[DGModel], real_models: List[DGModel],
                  scores: List[Callable], outcome_name: str = "Y"):
@@ -30,7 +32,7 @@ class Evaluator:
     def realworld_benchmark(self, dg_model_real: DGModel, n_repetitions, n_samples: int, tr_frac: float):
         """
         :param dg_model_real: a real-world DagSim model
-        :n_repetitions: number of times to repeat training-testing
+        :param n_repetitions: number of times to repeat training-testing
         :param n_samples: number of samples to generate for training + testing
         :param tr_frac: fraction of data for training
         :return: results: benchmarks in the shape {model_name: {score_name: list_of_score_values], ...}, ...}
@@ -72,30 +74,27 @@ class Evaluator:
 
     def meta_simulate(self, dg_model_real: DGModel, n_learning: int, n_train: int,n_test: int, n_true_repetitions: int, n_practitioner_repititions: int, n_sl_repititions: int):
         """
-            :param dg_model_real: a real-world DagSim model
-            :param n_learning: number of samples to draw from n_train to use in learners
-            :param n_train: number of samples to generate for training
-            :param n_test: number of samples to generate for testing
-            :param n_true_repetitions: number of times to repeat benchmarking in the true real-world
-            :param n_practitioner_repititions: number of times to repeat benchmarking in a limited real-world
-            :param n_sl_repititions: number of times to repeat benchmarking in the learner
-            :return: results: benchmarks in the shape {model_name: {learner: {score_name: list_of_score_values], ...}, ...}, ...}
+        :param dg_model_real: a real-world DagSim model
+        :param n_learning: number of samples to draw from n_train to use in learners
+        :param n_train: number of samples to generate for training
+        :param n_test: number of samples to generate for testing
+        :param n_true_repetitions: number of times to repeat benchmarking in the true real-world
+        :param n_practitioner_repititions: number of times to repeat benchmarking in a limited real-world
+        :param n_sl_repititions: number of times to repeat benchmarking in the learner
+        :return: results: benchmarks in the shape {model_name: {learner: {score_name: list_of_score_values], ...}, ...}, ...}
         """
         list_of_ntrue_accuracies = {method.name: [] for method in self.ml_models}
         list_of_npractitioner_accuracies = {method.name: [] for method in self.ml_models}
         list_of_nsl_accuracies = {learner.SLClass: {method.name: [] for method in self.ml_models} for learner in self.dg_models}
         dg_metrics, _, _ = self._get_performance_by_repetition_return_data(dg_model_real, n_train + n_test,0.5, n_true_repetitions)
         limited_dg_metrics, train_data_list, test_data_list = self._get_performance_by_repetition_return_data(dg_model_real, n_train + n_test,0.5, n_practitioner_repititions)
-        for ml in dg_metrics: # extract balanced_accuracy_score organisation
+        for ml in dg_metrics:
             list_of_ntrue_accuracies[ml] = dg_metrics[ml]['balanced_accuracy_score']
             list_of_npractitioner_accuracies[ml] = limited_dg_metrics[ml]['balanced_accuracy_score']
         for practitioner_rep in range(0, n_practitioner_repititions):
-            print("practitioner rep: ", practitioner_rep)
-            #train_data, test_data = self._get_train_and_test_from_dg(dg_model_real, n_train + n_test, 0.5)
-            #limited_dg_metrics = self._develop_all_ml_models(train_data, test_data)
-            #list_of_npractitioner_accuracies.append(limited_dg_metrics)
+            print("Practitioner repetition: ", practitioner_rep)
             for dg_model in self.dg_models:
-                print(dg_model.SLClass)
+                print("Learner used: ", dg_model.SLClass)
                 repetition_results = pd.DataFrame(
                     data=[[[] for _ in range(len(self.ml_models))] for __ in range(len(self.scores))],
                     index=[sc.__name__ for sc in self.scores], columns=[md.name for md in self.ml_models])
@@ -108,7 +107,7 @@ class Evaluator:
                     repetition_results[ml.name][score_name] = mean(repetition_results[ml.name][score_name])
                     list_of_nsl_accuracies[dg_model.SLClass][ml.name].append(repetition_results[ml.name][score_name])
         print("----- Output of analysis -----")
-        print("Infinite scenario all accuracies for all ml methods: ")
+        print("True real-world scenario all accuracies for all ml methods: ")
         print(list_of_ntrue_accuracies)
         print("Limited real-world all accuracies for all ml methods: ")
         print(list_of_npractitioner_accuracies)
@@ -124,38 +123,41 @@ class Evaluator:
         return [list_of_ntrue_accuracies, list_of_npractitioner_accuracies, list_of_nsl_accuracies, n_true_repetitions, n_practitioner_repititions, n_sl_repititions, self.dg_models, self.ml_models]
 
     def _evaluate_ml_model(self, ml_model: MachineLearner, test_data: Data):
-        '''
+        """
         Given a **trained** ml model, evaluate its performance using all the defined metrics on the test set.
-        '''
+        :param ml_model: the ml model to evaluate
+        :param test_data: the test data to use to evaluate the ml model
+        :return: metrics: benchmarks in the shape {model_name: {score_name: list_of_score_values], ...}, ...}
+        """
         y_pred = ml_model.predict(test_data)
         metrics = {}
         for score in self.scores:
             metrics.update({score.__name__: score(y_pred=y_pred, y_true=test_data.y)})
         return metrics
 
-    def _develop_all_ml_models(self, train_data: Data, test_data: Data):  # level 3 repetition
-        '''
-        Given a training set and a test set, train each machine learning model on the training data and test it on the
-        test set.
-        '''
+    def _develop_all_ml_models(self, train_data: Data, test_data: Data):
+        """
+        Evaluate a training and test set on all ml models.
+        :param train_data: the training set
+        :param test_data: the test data
+        :return: metrics: benchmarks in the shape {model_name: {score_name: list_of_score_values], ...}, ...}
+        """
         metrics = {}
         for ml_model in self.ml_models:
             metrics[f'{ml_model.name}'] = self._develop_ml_model(ml_model=ml_model, train_data=train_data,test_data=test_data)
         return metrics
 
-    def _evaluate_dg_model(self, dg_model: DGModel, n_learning: int, n_train: int, n_test: int, test_data: Data = None):
-
-        train_data = dg_model.generate(n_train, self.outcome_name)
-
-        if test_data is None:
-            test_data = dg_model.generate(n_test, self.outcome_name)
-
-        metrics = self._develop_all_ml_models(train_data, test_data)
-        metrics = {f'{dg_model.name}': metrics}
-        learning_data = train_data[0:n_learning:1] if n_learning > 0 else None
-        return metrics, learning_data, test_data
-
     def _evaluate_bnlearn_dg_model(self, dg_model: DGModel, learning_data_real, n_learning: int, n_train: int, n_test: int,SLClass: str):
+        """
+        Evaluate a limited dataset using a learner, perform ml evaluation and return benchmarks using the learner.
+        :param dg_model: a learner model
+        :param learning_data_real: the training set to be given to the learner algorithm
+        :param n_learning: the number of samples to be spliced from a dataset specifically for the learner (keep at 0)
+        :param n_train: the number of samples for the training set
+        :param n_test: the number of samples for the test set
+        :param SLClass: the label for the learner
+        :return: results: the benchmarks from learner, the training dataset and the test dataset
+        """
         learning_data_real = learning_data_real.all
         learning_data_real.loc[0] = 1
         learning_data_real.loc[1] = 0
@@ -314,7 +316,14 @@ class Evaluator:
         return metrics, learning_data, test_data
 
     def _get_performance_by_repetition(self, dg_model: DGModel, n_samples_real: int, tr_frac: float, n_reps: int,test_data=None):
-        assert test_data is None
+        """
+        Evaluate a data-generating model by a specified number of samples, train/test split and number of repetitions.
+        :param dg_model: the data-generating model
+        :param n_samples_real: the number of samples to use in the training and test sets
+        :param tr_frac: the training-test split to divide samples by
+        :param n_reps: the number of repetitions to repeat benchmarks
+        :return: results: benchmarks by repetition, the training dataset and the test dataset
+        """
         all_scores = {ml_model.name: {score.__name__: [] for score in self.scores} for ml_model in self.ml_models}
         train_data = None
         for rep in range(n_reps):
@@ -327,6 +336,14 @@ class Evaluator:
         return all_scores, train_data, test_data
 
     def _get_performance_by_repetition_return_data(self, dg_model: DGModel, n_samples_real: int, tr_frac: float, n_reps: int,test_data=None):
+        """
+        Evaluate a data-generating model by a specified number of samples, train/test split and number of repetitions. Return the training datasets per repetition.
+        :param dg_model: the data-generating model
+        :param n_samples_real: the number of samples to use in the training and test sets
+        :param tr_frac: the training-test split to divide samples by
+        :param n_reps: the number of repetitions to repeat benchmarks
+        :return: results: benchmarks by repetition, the training datasets and the test datasets
+        """
         all_scores = {ml_model.name: {score.__name__: [] for score in self.scores} for ml_model in self.ml_models}
         train_data = None
         train_data_list = []
@@ -346,13 +363,15 @@ class Evaluator:
     def _develop_ml_model(self, ml_model: MachineLearner, train_data: Data, test_data: Data):
         '''
         For a given ml model, train it on the provided training set and evaluate it on the test set.
-
         '''
         ml_model.learn(train_data)
         scores = self._evaluate_ml_model(ml_model, test_data)
         return scores
 
     def _get_train_and_test_from_dg(self, dg_model_real, n_samples, tr_frac):
+        '''
+        For a given data-generating model, generate both a training and test set.
+        '''
         train_data = dg_model_real.generate(int(n_samples * tr_frac), self.outcome_name)
         test_data = dg_model_real.generate(int(n_samples * (1 - tr_frac)), self.outcome_name)
         return train_data, test_data
