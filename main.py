@@ -41,45 +41,33 @@ starttime = time.time()
 ds_model = get_printer()
 
 ########################################################################################################################
-# Machine Learning configuration, select and specialise the algorithm used  a custom network or import an existing network (www.bnlearn.com/bnrepository/)
+# Machine Learning configuration, select and specialise the algorithm used a custom network or import an existing network (www.bnlearn.com/bnrepository/)
 # For example:
-# ds_model = get_asia()
-# ds_model = get_printer()
+# list_sklearn = []
+# list_sklearn.append(SklearnModel("SVCSigmoid", svm.SVC, kernel="sigmoid"))
+# list_sklearn.append(SklearnModel("GradientBoostingClassifier_logloss", GradientBoostingClassifier, loss="log_loss"))
+# list_sklearn.append(SklearnModel("RandomForestClassifier_entropy", RandomForestClassifier, criterion="entropy"))
+# list_sklearn.append(SklearnModel("LogisticLASSO", LogisticRegression, penalty="l1", solver="liblinear"))
 ########################################################################################################################
-
-# Machine-Learning Estimator configuration
-list_sklearn = [SklearnModel(f'{learner.__name__}', learner) for learner in[AdaBoostClassifier, RandomForestClassifier]]#, KNeighborsClassifier]], GradientBoostingClassifier]] #Additional NB classifiers GaussianNB, BernoulliNB, MultinomialNB, ComplementNB, CategoricalNB,
-#list_sklearn.append(SklearnModel("SVCRbf", svm.SVC, kernel="rbf"))
-#list_sklearn.append(SklearnModel("SVCSigmoid", svm.SVC, kernel="sigmoid"))
-
-#list_sklearn.append(SklearnModel("SVCLinear", svm.SVC, kernel="linear"))
-#list_sklearn.append(SklearnModel("KNeighborsClassifier_uniform", KNeighborsClassifier, weights="uniform"))
-#list_sklearn.append(SklearnModel("KNeighborsClassifier_distance", KNeighborsClassifier, weights="distance"))
-#list_sklearn.append(SklearnModel("GradientBoostingClassifier_logloss", GradientBoostingClassifier, loss="log_loss"))
-#list_sklearn.append(SklearnModel("GradientBoostingClassifier_exponential", GradientBoostingClassifier, loss="exponential"))
-#list_sklearn.append(SklearnModel("RandomForestClassifier_gini", RandomForestClassifier, criterion="gini"))
-#list_sklearn.append(SklearnModel("RandomForestClassifier_entropy", RandomForestClassifier, criterion="entropy"))
-#list_sklearn.append(SklearnModel("LogisticLASSO", LogisticRegression, penalty="l1", solver="liblinear"))
-#list_sklearn.append(SklearnModel("SVCSigmoid", svm.SVC, kernel="sigmoid"))
+list_sklearn = [SklearnModel(f'{learner.__name__}', learner) for learner in[AdaBoostClassifier, RandomForestClassifier]]
 list_sklearn.append(SklearnModel("MLPClassifier", MLPClassifier, solver='lbfgs', max_iter=1000, hidden_layer_sizes=(10, 2)))
 list_sklearn.append(SklearnModel("DecisionTreeClassifier_gini", DecisionTreeClassifier, criterion="gini"))
 list_sklearn.append(SklearnModel("DecisionTreeClassifier_entropy", DecisionTreeClassifier, criterion="entropy"))
 
-# Structural Learner configuration
-structural_learner_list = []#Bnlearner(name="hc", SLClass="hc"), Bnlearner(name="tabu", SLClass="tabu"), Bnlearner(name="rsmax2", SLClass="rsmax2"), Bnlearner(name="mmhc", SLClass="mmhc"), Bnlearner(name="h2pc", SLClass="h2pc"), Bnlearner(name="gs", SLClass="gs"), Bnlearner(name="pc.stable", SLClass="pc.stable")] #, NotearsLearner(name="notears_linear", SLClass="notears_linear", loss_type='logistic', lambda1=0.01), Bnlearner(name="iamb", SLClass="iamb"), Bnlearner(name="fast.iamb", SLClass="fast.iamb"),Bnlearner(name="iamb.fdr", SLClass="iamb.fdr")]
+########################################################################################################################
+# Structural Learner configuration, define and configure the learning algorithms used to estimate DAGs from limited data
+# For example:
+# structural_learner_list = []
+# structural_learner_list.append(Bnlearner(name="hc", SLClass="hc"))
+# structural_learner_list.append(Bnlearner(name="iamb", SLClass="iamb"))
+# structural_learner_list.append(NotearsLearner(name="notears_linear", SLClass="notears_linear", loss_type='logistic', lambda1=0.01))
+########################################################################################################################
+structural_learner_list = [Bnlearner(name="hc", SLClass="hc"), Bnlearner(name="tabu", SLClass="tabu"), Bnlearner(name="rsmax2", SLClass="rsmax2"), Bnlearner(name="mmhc", SLClass="mmhc"), Bnlearner(name="h2pc", SLClass="h2pc"), Bnlearner(name="gs", SLClass="gs"), Bnlearner(name="pc.stable", SLClass="pc.stable")]
 
-def scorer(y_pred, y_true):
-    return np.random.normal(0.7, 0.1)
-
-
-evaluator = Evaluator(ml_models=list_sklearn, dg_models=structural_learner_list, real_models=[ds_model],
-                      scores=[balanced_accuracy_score], outcome_name="Y")
-pp = Postprocessing()
-
-# Provide the Bayesian network, train/test splits, and repetitions at different parts of the meta-simulation
+evaluator = Evaluator(ml_models=list_sklearn, dg_models=structural_learner_list, real_models=[ds_model],scores=[balanced_accuracy_score], outcome_name="Y")
 interworld_benchmarks = evaluator.meta_simulate(ds_model, n_learning=0, n_train=200,n_test=200, n_true_repetitions=100, n_practitioner_repititions=30, n_sl_repititions=500)
+pp = Postprocessing()
 pp.meta_simulation_visualise(interworld_benchmarks)
-
 endtime = time.time()
 print("Time taken: ", endtime - starttime)
 
