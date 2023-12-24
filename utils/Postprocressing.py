@@ -310,6 +310,20 @@ class Postprocessing():
         plt.show()
 
         plt.figure(figsize=(10, 10))
+        ax = sns.boxplot(x=output_pd['ML_method'], y=output_pd['est-true'], hue=output_pd['SL'],showfliers=True, order=ordered_list_of_methods, showmeans=True,meanprops={"marker":"o","markerfacecolor":"red", "markeredgecolor":"black","markersize":"5"})
+        plt.title('Boxplot of difference between estimated performances and true by ml method for strategies')
+        plt.ylabel('Difference to True estimated performance')
+        plt.xlabel('ML Method (least performing to best)')
+        added_methods = []
+        for idx, item in enumerate(rank_methods):
+            added_methods.append(rank_methods[idx][0])# + " (True perf: "+ str(round(rank_methods[idx][1],2))+")" )
+            ax.get_xticklabels()
+        ax.set_xticklabels(added_methods, rotation=90)
+        plt.tight_layout()
+        plt.savefig(os.getcwd() + figuredirname + 'interworld_benchmarks_boxplot_all_ml_methods_diff_to_true_xaxis_ordered_fliers.png')
+        plt.show()
+
+        plt.figure(figsize=(10, 10))
         ax = sns.boxplot(x=output_pd['ML_method'], y=output_pd['est-to-avgml'], hue=output_pd['SL'],showfliers=False, showmeans=True,meanprops={"marker":"o","markerfacecolor":"red", "markeredgecolor":"black","markersize":"5"})
         plt.title('Boxplot of difference between estimated and avg ml performances by ml method for strategies')
         plt.ylabel('Difference to Avg ML performance')
@@ -331,6 +345,20 @@ class Postprocessing():
         ax.set_xticklabels(added_methods, rotation=90)
         plt.tight_layout()
         plt.savefig(os.getcwd() + figuredirname + 'interworld_benchmarks_boxplot_all_ml_methods_diff_to_avg_ml_performance_xaxis_ordered.png')
+        plt.show()
+
+        plt.figure(figsize=(10, 10))
+        ax = sns.boxplot(x=output_pd['ML_method'], y=output_pd['est-to-avgml'], hue=output_pd['SL'], showfliers=True,order=ordered_list_of_methods, showmeans=True,meanprops={"marker": "o", "markerfacecolor": "red", "markeredgecolor": "black","markersize": "5"})
+        plt.title('Boxplot of difference between estimated and avg ml performances by ml method for strategies')
+        plt.ylabel('Difference to Avg ML performance')
+        plt.xlabel('ML Method (least performing to best)')
+        added_methods = []
+        for idx, item in enumerate(rank_methods):
+            added_methods.append(rank_methods[idx][0])  # + " (True perf:"+ str(round(rank_methods[idx][1],2))+")" )
+            ax.get_xticklabels()
+        ax.set_xticklabels(added_methods, rotation=90)
+        plt.tight_layout()
+        plt.savefig(os.getcwd() + figuredirname + 'interworld_benchmarks_boxplot_all_ml_methods_diff_to_avg_ml_performance_xaxis_ordered_fliers.png')
         plt.show()
 
         for ml in self.ml_models:

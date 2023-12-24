@@ -1,5 +1,5 @@
 import unittest
-from ..WorldLearner import WorldLearner
+from WorldLearner import WorldLearner
 from pgmpy.models import BayesianModel
 import numpy as np
 from pgmpy.estimators import PC

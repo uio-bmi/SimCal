@@ -23,7 +23,6 @@ import os
 import numpy as np
 warnings.simplefilter(action='ignore', category=FutureWarning)
 starttime = time.time()
-
 ########################################################################################################################
 # To run a meta-simulation in SimCal, the user needs to specify three elements
 #
@@ -65,7 +64,7 @@ list_sklearn.append(SklearnModel("DecisionTreeClassifier_entropy", DecisionTreeC
 structural_learner_list = [Bnlearner(name="hc", SLClass="hc"), Bnlearner(name="tabu", SLClass="tabu"), Bnlearner(name="rsmax2", SLClass="rsmax2"), Bnlearner(name="mmhc", SLClass="mmhc"), Bnlearner(name="h2pc", SLClass="h2pc"), Bnlearner(name="gs", SLClass="gs"), Bnlearner(name="pc.stable", SLClass="pc.stable")]
 
 evaluator = Evaluator(ml_models=list_sklearn, dg_models=structural_learner_list, real_models=[ds_model],scores=[balanced_accuracy_score], outcome_name="Y")
-interworld_benchmarks = evaluator.meta_simulate(ds_model, n_learning=0, n_train=200,n_test=200, n_true_repetitions=1000, n_practitioner_repititions=30, n_sl_repititions=500)
+interworld_benchmarks = evaluator.meta_simulate(ds_model, n_learning=0, n_train=200,n_test=200, n_true_repetitions=50, n_practitioner_repititions=3, n_sl_repititions=10)
 pp = Postprocessing()
 pp.meta_simulation_visualise(interworld_benchmarks)
 endtime = time.time()

@@ -171,8 +171,8 @@ class Evaluator:
                         learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
                         my_bn <- hc(learning_data_real, replace.unidentifiable=TRUE, method='bayes')
                         fit = bn.fit(my_bn, learning_data_real)
-                        training_output = rbn(fit, n_train, learning_data_real)
-                        testing_output = rbn(fit, n_test, learning_data_real)
+                        training_output = rbn(fit, n_train)
+                        testing_output = rbn(fit, n_test)
                         training_output[is.na(training_output)] <- 0
                         testing_output[is.na(testing_output)] <- 0
                         list_output <- list(training_output, testing_output)
@@ -186,8 +186,8 @@ class Evaluator:
                         learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
                         my_bn <- tabu(learning_data_real)
                         fit = bn.fit(my_bn, learning_data_real)
-                        training_output = rbn(fit, n_train, learning_data_real)
-                        testing_output = rbn(fit, n_test, learning_data_real)
+                        training_output = rbn(fit, n_train)
+                        testing_output = rbn(fit, n_test)
                         training_output[is.na(training_output)] <- 0
                         testing_output[is.na(testing_output)] <- 0
                         list_output <- list(training_output, testing_output)
@@ -201,8 +201,8 @@ class Evaluator:
                         learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
                         my_bn <- rsmax2(learning_data_real)
                         fit = bn.fit(my_bn, learning_data_real)
-                        training_output = rbn(fit, n_train, learning_data_real)
-                        testing_output = rbn(fit, n_test, learning_data_real)
+                        training_output = rbn(fit, n_train)
+                        testing_output = rbn(fit, n_test)
                         training_output[is.na(training_output)] <- 0
                         testing_output[is.na(testing_output)] <- 0
                         list_output <- list(training_output, testing_output)
@@ -216,8 +216,8 @@ class Evaluator:
                         learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
                         my_bn <- mmhc(learning_data_real)
                         fit = bn.fit(my_bn, learning_data_real)
-                        training_output = rbn(fit, n_train, learning_data_real)
-                        testing_output = rbn(fit, n_test, learning_data_real)
+                        training_output = rbn(fit, n_train)
+                        testing_output = rbn(fit, n_test)
                         training_output[is.na(training_output)] <- 0
                         testing_output[is.na(testing_output)] <- 0
                         list_output <- list(training_output, testing_output)
@@ -231,8 +231,8 @@ class Evaluator:
                         learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
                         my_bn <- h2pc(learning_data_real)
                         fit = bn.fit(my_bn, learning_data_real)
-                        training_output = rbn(fit, n_train, learning_data_real)
-                        testing_output = rbn(fit, n_test, learning_data_real)
+                        training_output = rbn(fit, n_train)
+                        testing_output = rbn(fit, n_test)
                         training_output[is.na(training_output)] <- 0
                         testing_output[is.na(testing_output)] <- 0
                         list_output <- list(training_output, testing_output)
@@ -246,8 +246,8 @@ class Evaluator:
                         learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
                         my_bn <- cextend(gs(learning_data_real), strict=FALSE)
                         fit = bn.fit(my_bn, learning_data_real)
-                        training_output = rbn(fit, n_train, learning_data_real)
-                        testing_output = rbn(fit, n_test, learning_data_real)
+                        training_output = rbn(fit, n_train)
+                        testing_output = rbn(fit, n_test)
                         training_output[is.na(training_output)] <- 0
                         testing_output[is.na(testing_output)] <- 0
                         list_output <- list(training_output, testing_output)
@@ -261,8 +261,8 @@ class Evaluator:
                         learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
                         my_bn <- cextend(iamb(learning_data_real), strict=FALSE)
                         fit = bn.fit(my_bn, learning_data_real)
-                        training_output = rbn(fit, n_train, learning_data_real)
-                        testing_output = rbn(fit, n_test, learning_data_real)
+                        training_output = rbn(fit, n_train)
+                        testing_output = rbn(fit, n_test)
                         training_output[is.na(training_output)] <- 0
                         testing_output[is.na(testing_output)] <- 0
                         list_output <- list(training_output, testing_output)
@@ -276,8 +276,8 @@ class Evaluator:
                         learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
                         my_bn <- cextend(fast.iamb(learning_data_real), strict=FALSE)
                         fit = bn.fit(my_bn, learning_data_real)
-                        training_output = rbn(fit, n_train, learning_data_real)
-                        testing_output = rbn(fit, n_test, learning_data_real)
+                        training_output = rbn(fit, n_train)
+                        testing_output = rbn(fit, n_test)
                         training_output[is.na(training_output)] <- 0
                         testing_output[is.na(testing_output)] <- 0
                         list_output <- list(training_output, testing_output)
@@ -291,8 +291,8 @@ class Evaluator:
                         learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
                         my_bn <- cextend(iamb.fdr(learning_data_real), strict=FALSE)
                         fit = bn.fit(my_bn, learning_data_real)
-                        training_output = rbn(fit, n_train, learning_data_real)
-                        testing_output = rbn(fit, n_test, learning_data_real)
+                        training_output = rbn(fit, n_train)
+                        testing_output = rbn(fit, n_test)
                         training_output[is.na(training_output)] <- 0
                         testing_output[is.na(testing_output)] <- 0
                         list_output <- list(training_output, testing_output)
