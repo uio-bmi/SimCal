@@ -94,7 +94,7 @@ class Evaluator:
         for practitioner_rep in range(0, n_practitioner_repititions):
             print("Practitioner repetition: ", practitioner_rep)
             for dg_model in self.dg_models:
-                print("Learner used: ", dg_model.SLClass)
+                print("Learner: ", dg_model.SLClass)
                 repetition_results = pd.DataFrame(
                     data=[[[] for _ in range(len(self.ml_models))] for __ in range(len(self.scores))],
                     index=[sc.__name__ for sc in self.scores], columns=[md.name for md in self.ml_models])
@@ -168,14 +168,12 @@ class Evaluator:
                         library(bnlearn)
                         library(plyr)
                         bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
-                        learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
-                        my_bn <- hc(learning_data_real, replace.unidentifiable=TRUE, method='bayes')
+                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE)
+                        my_bn <- hc(learning_data_real)
                         fit = bn.fit(my_bn, learning_data_real)
-                        training_output = rbn(fit, n_train)
-                        testing_output = rbn(fit, n_test)
-                        training_output[is.na(training_output)] <- 0
-                        testing_output[is.na(testing_output)] <- 0
-                        list_output <- list(training_output, testing_output)
+                        training_output = rbn(fit, n_train, keep.fitted = TRUE)
+                        testing_output = rbn(fit, n_test, keep.fitted = TRUE)
+                        list_output <- list(na.omit(training_output), na.omit(testing_output))
                         }
                         ''')
         elif SLClass == "tabu":
@@ -183,14 +181,12 @@ class Evaluator:
                         library(bnlearn)
                         library(plyr)
                         bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
-                        learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
+                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE)
                         my_bn <- tabu(learning_data_real)
                         fit = bn.fit(my_bn, learning_data_real)
-                        training_output = rbn(fit, n_train)
-                        testing_output = rbn(fit, n_test)
-                        training_output[is.na(training_output)] <- 0
-                        testing_output[is.na(testing_output)] <- 0
-                        list_output <- list(training_output, testing_output)
+                        training_output = rbn(fit, n_train, keep.fitted = TRUE)
+                        testing_output = rbn(fit, n_test, keep.fitted = TRUE)
+                        list_output <- list(na.omit(training_output), na.omit(testing_output))
                         }
                         ''')
         elif SLClass == "rsmax2":
@@ -198,14 +194,12 @@ class Evaluator:
                         library(bnlearn)
                         library(plyr)
                         bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
-                        learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
+                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE)
                         my_bn <- rsmax2(learning_data_real)
                         fit = bn.fit(my_bn, learning_data_real)
-                        training_output = rbn(fit, n_train)
-                        testing_output = rbn(fit, n_test)
-                        training_output[is.na(training_output)] <- 0
-                        testing_output[is.na(testing_output)] <- 0
-                        list_output <- list(training_output, testing_output)
+                        training_output = rbn(fit, n_train, keep.fitted = TRUE)
+                        testing_output = rbn(fit, n_test, keep.fitted = TRUE)
+                        list_output <- list(na.omit(training_output), na.omit(testing_output))
                         }
                         ''')
         elif SLClass == "mmhc":
@@ -213,14 +207,12 @@ class Evaluator:
                         library(bnlearn)
                         library(plyr)
                         bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
-                        learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
+                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE)
                         my_bn <- mmhc(learning_data_real)
                         fit = bn.fit(my_bn, learning_data_real)
-                        training_output = rbn(fit, n_train)
-                        testing_output = rbn(fit, n_test)
-                        training_output[is.na(training_output)] <- 0
-                        testing_output[is.na(testing_output)] <- 0
-                        list_output <- list(training_output, testing_output)
+                        training_output = rbn(fit, n_train, keep.fitted = TRUE)
+                        testing_output = rbn(fit, n_test, keep.fitted = TRUE)
+                        list_output <- list(na.omit(training_output), na.omit(testing_output))
                         }
                         ''')
         elif SLClass == "h2pc":
@@ -228,14 +220,12 @@ class Evaluator:
                         library(bnlearn)
                         library(plyr)
                         bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
-                        learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
+                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE)
                         my_bn <- h2pc(learning_data_real)
                         fit = bn.fit(my_bn, learning_data_real)
-                        training_output = rbn(fit, n_train)
-                        testing_output = rbn(fit, n_test)
-                        training_output[is.na(training_output)] <- 0
-                        testing_output[is.na(testing_output)] <- 0
-                        list_output <- list(training_output, testing_output)
+                        training_output = rbn(fit, n_train, keep.fitted = TRUE)
+                        testing_output = rbn(fit, n_test, keep.fitted = TRUE)
+                        list_output <- list(na.omit(training_output), na.omit(testing_output))
                         }
                         ''')
         elif SLClass == "gs":
@@ -243,14 +233,12 @@ class Evaluator:
                         library(bnlearn)
                         library(plyr)
                         bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
-                        learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
+                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE)
                         my_bn <- cextend(gs(learning_data_real), strict=FALSE)
                         fit = bn.fit(my_bn, learning_data_real)
-                        training_output = rbn(fit, n_train)
-                        testing_output = rbn(fit, n_test)
-                        training_output[is.na(training_output)] <- 0
-                        testing_output[is.na(testing_output)] <- 0
-                        list_output <- list(training_output, testing_output)
+                        training_output = rbn(fit, n_train, keep.fitted = TRUE)
+                        testing_output = rbn(fit, n_test, keep.fitted = TRUE)
+                        list_output <- list(na.omit(training_output), na.omit(testing_output))
                         }
                         ''')
         elif SLClass == "iamb":
@@ -258,14 +246,12 @@ class Evaluator:
                         library(bnlearn)
                         library(plyr)
                         bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
-                        learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
+                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE)
                         my_bn <- cextend(iamb(learning_data_real), strict=FALSE)
                         fit = bn.fit(my_bn, learning_data_real)
-                        training_output = rbn(fit, n_train)
-                        testing_output = rbn(fit, n_test)
-                        training_output[is.na(training_output)] <- 0
-                        testing_output[is.na(testing_output)] <- 0
-                        list_output <- list(training_output, testing_output)
+                        training_output = rbn(fit, n_train, keep.fitted = TRUE)
+                        testing_output = rbn(fit, n_test, keep.fitted = TRUE)
+                        list_output <- list(na.omit(training_output), na.omit(testing_output))
                         }
                         ''')
         elif SLClass == "fast.iamb":
@@ -273,14 +259,12 @@ class Evaluator:
                         library(bnlearn)
                         library(plyr)
                         bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
-                        learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
+                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE)
                         my_bn <- cextend(fast.iamb(learning_data_real), strict=FALSE)
                         fit = bn.fit(my_bn, learning_data_real)
-                        training_output = rbn(fit, n_train)
-                        testing_output = rbn(fit, n_test)
-                        training_output[is.na(training_output)] <- 0
-                        testing_output[is.na(testing_output)] <- 0
-                        list_output <- list(training_output, testing_output)
+                        training_output = rbn(fit, n_train, keep.fitted = TRUE)
+                        testing_output = rbn(fit, n_test, keep.fitted = TRUE)
+                        list_output <- list(na.omit(training_output), na.omit(testing_output))
                         }
                         ''')
         elif SLClass == "iamb.fdr":
@@ -288,14 +272,12 @@ class Evaluator:
                         library(bnlearn)
                         library(plyr)
                         bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
-                        learning_data_real <- data.frame(lapply(learning_data_real,factor), stringsAsFactors=TRUE)   
+                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE) 
                         my_bn <- cextend(iamb.fdr(learning_data_real), strict=FALSE)
                         fit = bn.fit(my_bn, learning_data_real)
-                        training_output = rbn(fit, n_train)
-                        testing_output = rbn(fit, n_test)
-                        training_output[is.na(training_output)] <- 0
-                        testing_output[is.na(testing_output)] <- 0
-                        list_output <- list(training_output, testing_output)
+                        training_output = rbn(fit, n_train, keep.fitted = TRUE)
+                        testing_output = rbn(fit, n_test, keep.fitted = TRUE)
+                        list_output <- list(na.omit(training_output), na.omit(testing_output))
                         }
                         ''')
 
