@@ -160,8 +160,6 @@ class Evaluator:
         :return: results: the benchmarks from learner, the training dataset and the test dataset
         """
         learning_data_real = learning_data_real.all
-        learning_data_real.loc[0] = 1
-        learning_data_real.loc[1] = 0
 
         if SLClass == "hc":
             robjects.r('''
@@ -169,6 +167,15 @@ class Evaluator:
                         library(plyr)
                         bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
                         learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE)
+                        check_and_modify_levels <- function(column){
+                        num_levels <- length(levels(column))
+                        if(num_levels==1){
+                        new_levels <- c("0","1")
+                        column <- factor(column, levels = new_levels)
+                        }
+                        return(column)
+                        }
+                        learning_data_real <- data.frame(lapply(learning_data_real,check_and_modify_levels))
                         my_bn <- hc(learning_data_real)
                         fit = bn.fit(my_bn, learning_data_real)
                         training_output = rbn(fit, n_train, keep.fitted = TRUE)
@@ -181,7 +188,16 @@ class Evaluator:
                         library(bnlearn)
                         library(plyr)
                         bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
-                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE)
+                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE)         
+                        check_and_modify_levels <- function(column){
+                        num_levels <- length(levels(column))
+                        if(num_levels==1){
+                        new_levels <- c("0","1")
+                        column <- factor(column, levels = new_levels)
+                        }
+                        return(column)
+                        }
+                        learning_data_real <- data.frame(lapply(learning_data_real,check_and_modify_levels))
                         my_bn <- tabu(learning_data_real)
                         fit = bn.fit(my_bn, learning_data_real)
                         training_output = rbn(fit, n_train, keep.fitted = TRUE)
@@ -194,7 +210,16 @@ class Evaluator:
                         library(bnlearn)
                         library(plyr)
                         bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
-                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE)
+                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE)    
+                        check_and_modify_levels <- function(column){
+                        num_levels <- length(levels(column))
+                        if(num_levels==1){
+                        new_levels <- c("0","1")
+                        column <- factor(column, levels = new_levels)
+                        }
+                        return(column)
+                        }
+                        learning_data_real <- data.frame(lapply(learning_data_real,check_and_modify_levels))
                         my_bn <- rsmax2(learning_data_real)
                         fit = bn.fit(my_bn, learning_data_real)
                         training_output = rbn(fit, n_train, keep.fitted = TRUE)
@@ -207,7 +232,16 @@ class Evaluator:
                         library(bnlearn)
                         library(plyr)
                         bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
-                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE)
+                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE)     
+                        check_and_modify_levels <- function(column){
+                        num_levels <- length(levels(column))
+                        if(num_levels==1){
+                        new_levels <- c("0","1")
+                        column <- factor(column, levels = new_levels)
+                        }
+                        return(column)
+                        }
+                        learning_data_real <- data.frame(lapply(learning_data_real,check_and_modify_levels))
                         my_bn <- mmhc(learning_data_real)
                         fit = bn.fit(my_bn, learning_data_real)
                         training_output = rbn(fit, n_train, keep.fitted = TRUE)
@@ -220,7 +254,16 @@ class Evaluator:
                         library(bnlearn)
                         library(plyr)
                         bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
-                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE)
+                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE)        
+                        check_and_modify_levels <- function(column){
+                        num_levels <- length(levels(column))
+                        if(num_levels==1){
+                        new_levels <- c("0","1")
+                        column <- factor(column, levels = new_levels)
+                        }
+                        return(column)
+                        }
+                        learning_data_real <- data.frame(lapply(learning_data_real,check_and_modify_levels))
                         my_bn <- h2pc(learning_data_real)
                         fit = bn.fit(my_bn, learning_data_real)
                         training_output = rbn(fit, n_train, keep.fitted = TRUE)
@@ -233,7 +276,16 @@ class Evaluator:
                         library(bnlearn)
                         library(plyr)
                         bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
-                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE)
+                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE)           
+                        check_and_modify_levels <- function(column){
+                        num_levels <- length(levels(column))
+                        if(num_levels==1){
+                        new_levels <- c("0","1")
+                        column <- factor(column, levels = new_levels)
+                        }
+                        return(column)
+                        }
+                        learning_data_real <- data.frame(lapply(learning_data_real,check_and_modify_levels))
                         my_bn <- cextend(gs(learning_data_real), strict=FALSE)
                         fit = bn.fit(my_bn, learning_data_real)
                         training_output = rbn(fit, n_train, keep.fitted = TRUE)
@@ -246,7 +298,16 @@ class Evaluator:
                         library(bnlearn)
                         library(plyr)
                         bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
-                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE)
+                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE)          
+                        check_and_modify_levels <- function(column){
+                        num_levels <- length(levels(column))
+                        if(num_levels==1){
+                        new_levels <- c("0","1")
+                        column <- factor(column, levels = new_levels)
+                        }
+                        return(column)
+                        }
+                        learning_data_real <- data.frame(lapply(learning_data_real,check_and_modify_levels))
                         my_bn <- cextend(iamb(learning_data_real), strict=FALSE)
                         fit = bn.fit(my_bn, learning_data_real)
                         training_output = rbn(fit, n_train, keep.fitted = TRUE)
@@ -259,7 +320,16 @@ class Evaluator:
                         library(bnlearn)
                         library(plyr)
                         bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
-                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE)
+                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE)        
+                        check_and_modify_levels <- function(column){
+                        num_levels <- length(levels(column))
+                        if(num_levels==1){
+                        new_levels <- c("0","1")
+                        column <- factor(column, levels = new_levels)
+                        }
+                        return(column)
+                        }
+                        learning_data_real <- data.frame(lapply(learning_data_real,check_and_modify_levels))
                         my_bn <- cextend(fast.iamb(learning_data_real), strict=FALSE)
                         fit = bn.fit(my_bn, learning_data_real)
                         training_output = rbn(fit, n_train, keep.fitted = TRUE)
@@ -272,7 +342,16 @@ class Evaluator:
                         library(bnlearn)
                         library(plyr)
                         bn_learn <- function(learning_data_real, n_train, n_test, verbose=FALSE) {     
-                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE) 
+                        learning_data_real <- data.frame(lapply(learning_data_real,as.factor), stringsAsFactors=TRUE)             
+                        check_and_modify_levels <- function(column){
+                        num_levels <- length(levels(column))
+                        if(num_levels==1){
+                        new_levels <- c("0","1")
+                        column <- factor(column, levels = new_levels)
+                        }
+                        return(column)
+                        }
+                        learning_data_real <- data.frame(lapply(learning_data_real,check_and_modify_levels))
                         my_bn <- cextend(iamb.fdr(learning_data_real), strict=FALSE)
                         fit = bn.fit(my_bn, learning_data_real)
                         training_output = rbn(fit, n_train, keep.fitted = TRUE)
