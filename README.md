@@ -7,8 +7,8 @@ The main goal of this project is to bring empirical understanding to practitione
 ## Table of contents
 
 - [Table of contents](#table-of-contents)
-- [⚙️Installation](#installation)
-- [📜Usage](#usage)
+- [⚙️ Download](#download)
+- [📜 Usage](#usage)
   - [👀 Quickstart](#-quickstart)
   - [📦 Define SLs](#-define-sl-learners)
     - [🎯 Score-based - Hill-Climbing](#-sl-hc)
@@ -23,28 +23,28 @@ The main goal of this project is to bring empirical understanding to practitione
   - [📈 Outputs & Visualization](#-visualization)
 - [License](#license)
 
-## Installation
+## Download
 
-SimCal has been tested on Python 3.8 and R 4.3.2. 
-You can install the library using the following command:
+
+You can begin to use the library using the following command:
 
 ```sh
-pip install git+https://github.com/uio-bmi/SimCal
+git clone https://github.com/uio-bmi/SimCal.git
 ```
 
 ## Usage
 
-To setup a meta-simulation, three components (Bayesian Network, Structural Learners and ML estimators) need to be specified. 
+SimCal has been tested on Python 3.8 and R 4.3.2. To setup a meta-simulation, three components (Bayesian Network, Structural Learners and ML estimators) need to be specified. 
 The first component is for the user of the framework to provide the structure and parameters of their real-world model. 
 Depending on the nature of the problem the Structure (i.e., variables) and Conditional Probability Table (i.e., discrete measure of relationships) may be well or partially known, in this circumstance it is best to import this Bayesian Network as a DagsimModel. Alternativelly if data of the domain is available then it is possible to estimate the structure and parameters and use learning methods offered by Bayesian Network packages (e.g., pgmpy)
 The second component is for the user of the framework to provide the SL learners to be used to estimate structural models and perform ML benchmarking. This dictates the algorithms which will function inside the meta-simulation to learn underlying relationships and output DAGs which embody the data-generating process which is of interest.
-The third component is for the user of the framework to provide their selection of ML estimator and therefore the shape of the ML problem. The most popular kinds of ML problem are regression and classification. The ML estimators selected for the meta-simulation will be recorded in the environments relevant to the custodian, including the true real-world, limited real-world and learned calibrated worlds. 
+The third component is for the user of the framework to provide their selection of ML estimator and therefore the shape of the ML problem. The most popular kinds of ML problem are regression and classification. The ML estimators selected for the meta-simulation will be tested in the data environments relevant to the custodian, including in benchmarks of the true real-world, limited real-world and learned calibrated worlds. 
 
 ## [👀 Quickstart](#-quickstart)
 To begin running a simple meta-simulation, access the main application (i.e., main.py) and configure the three components as above to desired settings. Determine the size of the train/test datasets in benchmarking and provide the scale of experimental repetitions performed for the true real-world, limited real-world and learned calibrated worlds.
 
 ## [📦 Define SLs](#-define-sl-learners)
-The following are a selection of Structure Learning algorithms available for integration within the meta-simulation. Each can be configured with hyperparameters for dynamic behaviour within runtime.
+The following are a selection of SL algorithms available for integration within the meta-simulation. Each can be configured with hyperparameters for extended configuration.
 
 ## [🎯 Score-based - Hill-Climbing](#-sl-hc)
 Hill climbing is a local search algorithm which begins with an initial solution and iteratively makes small changes to enhance it, guided by a heuristic function that assesses solution quality. The process continues until a local maximum is reached, indicating that further improvement is not possible with the current set of moves.
