@@ -10,6 +10,8 @@ from utils.Andes_Dag import *
 from utils.Postprocressing import Postprocessing
 from sklearn.metrics import balanced_accuracy_score
 
+from utils.Win95_Dag import get_printer
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 starttime = time.time()
 ########################################################################################################################
@@ -53,7 +55,7 @@ list_sklearn.append(SklearnModel("DecisionTreeClassifier_entropy", DecisionTreeC
 structural_learner_list = [Bnlearner(name="hc", SLClass="hc"), Bnlearner(name="tabu", SLClass="tabu"), Bnlearner(name="rsmax2", SLClass="rsmax2"), Bnlearner(name="mmhc", SLClass="mmhc"), Bnlearner(name="h2pc", SLClass="h2pc"), Bnlearner(name="gs", SLClass="gs"), Bnlearner(name="pc.stable", SLClass="pc.stable")]
 
 evaluator = Evaluator(ml_models=list_sklearn, dg_models=structural_learner_list, real_models=[ds_model],scores=[balanced_accuracy_score], outcome_name="Y")
-metasimulation_benchmarks = evaluator.meta_simulate(ds_model, n_learning=0, n_train=200,n_test=200, n_true_repetitions=1000, n_practitioner_repititions=30, n_sl_repititions=500)
+metasimulation_benchmarks = evaluator.meta_simulate(ds_model, n_learning=0, n_train=200,n_test=200, n_true_repetitions=1000, n_practitioner_repititions=10, n_sl_repititions=500, kfolds=5)
 pp = Postprocessing()
 pp.meta_simulation_visualise(metasimulation_benchmarks)
 endtime = time.time()
