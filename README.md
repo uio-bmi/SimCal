@@ -23,13 +23,19 @@ The main goal of this project is to bring empirical understanding to practitione
   - [📈 Outputs & Visualization](#-visualization)
 - [License](#license)
 
-## Download
 
+## Installation
 
-You can begin to use the library using the following command:
+Simcalibration is a Python package for simulation-based calibration with R integration.
+It requires **Python (>=3.9)**, **R**, and **Graphviz**.
 
-```sh
-git clone https://github.com/uio-bmi/SimCal.git
+⚠️ Note: This package is only compatible on **Linux** and **macOS**.
+Windows users should install VirtualBox and simulate a compatible environment:
+
+Then install simcalibration with pip:
+
+```bash
+pip install simcalibration
 ```
 
 ## Usage
