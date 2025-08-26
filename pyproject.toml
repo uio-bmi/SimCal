@@ -51,7 +51,7 @@ Homepage = "https://github.com/uio-bmi/SimCal"
 Issues = "https://github.com/uio-bmi/SimCal/issues"
 
 [project.scripts]
-simcalibration = "simcalibration.cli:main"
+simcalibration = "simcalibration.main:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
