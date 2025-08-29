@@ -10,9 +10,9 @@ tabulate>=0.8.9
 #git+git://github.com/erdogant/bnlearn.git@master#bnlearn
 matplotlib~=3.5.1
 dagsim~=1.0.6
-#bnlearn~=0.6.1
+bnlearn~=0.6.1
 statsmodels~=0.13.2
 rpy2~=3.4.5
 transpose-dict
 # use the GitHub version to avoid broken PyPI dependency
-git+https://github.com/erdogant/bnlearn.git@master#egg=bnlearn
+#git+https://github.com/erdogant/bnlearn.git@master#egg=bnlearn
