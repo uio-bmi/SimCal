@@ -26,7 +26,7 @@ dependencies = [
     "scikit-learn>=0.24.2",
     "scipy>=1.6.2",
     "tabulate>=0.8.9",
-    "bnlearn~=0.6.1",
+    "bnlearn @ git+https://github.com/erdogant/bnlearn.git@master",
     "dagsim~=1.0.6",
     "statsmodels~=0.13.2",
     "transpose-dict",
